@@ -18,7 +18,7 @@ IDLE_PATTERNS="no agent-task issues open|no anomalies found|no findings|no open 
 agent_loop() {
   local name="$1"
   local script="$REPO_DIR/src/agents/run-${name}.sh"
-  local log="$REPO_DIR/logs/agent-${name}.log"
+  local log="$REPO_DIR/logs/agents/agent-${name}.log"
 
   while true; do
     output=$("$script" 2>&1)
@@ -35,7 +35,7 @@ agent_loop() {
 
 # Manager runs less often even when active (daily oversight role)
 manager_loop() {
-  local log="$REPO_DIR/logs/agent-manager.log"
+  local log="$REPO_DIR/logs/agents/agent-manager.log"
   while true; do
     "$REPO_DIR/src/agents/run-manager.sh" 2>&1
     echo "$(date -u): [manager] sleeping ${IDLE_SLEEP}s" | tee -a "$log"
@@ -46,7 +46,7 @@ manager_loop() {
 echo "$(date -u): Starting rightmove agent team"
 echo "  Idle sleep:  ${IDLE_SLEEP}s (1h)"
 echo "  Work sleep:  ${WORK_SLEEP}s (5min)"
-echo "  Logs: $REPO_DIR/logs/agent-*.log"
+echo "  Logs: $REPO_DIR/logs/agents/agent-*.log"
 echo "  Stop: ctrl-c (or kill $$)"
 echo ""
 

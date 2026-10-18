@@ -3,7 +3,8 @@
 set -e
 
 REPO_DIR="/home/imiell/git/rightmove-data-scraper"
-LOG_OUT="$REPO_DIR/logs/agent-code-reviewer.log"
+LOG_OUT="$REPO_DIR/logs/agents/agent-code-reviewer.log"
+mkdir -p "$REPO_DIR/logs/agents"
 
 echo "$(date -u): code-reviewer starting" | tee -a "$LOG_OUT"
 

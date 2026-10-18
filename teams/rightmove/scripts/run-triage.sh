@@ -3,7 +3,8 @@
 set -e
 
 REPO_DIR="/home/imiell/git/rightmove-data-scraper"
-LOG_OUT="$REPO_DIR/logs/agent-triage.log"
+LOG_OUT="$REPO_DIR/logs/agents/agent-triage.log"
+mkdir -p "$REPO_DIR/logs/agents"
 
 echo "$(date -u): triage starting" | tee -a "$LOG_OUT"
 
