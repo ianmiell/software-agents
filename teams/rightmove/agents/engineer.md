@@ -25,7 +25,7 @@ GitHub: `ianmiell/<repo-name>`
 
 1. Fetch open issues labeled `agent-task` across all repos:
    ```bash
-   for repo in rightmove-data-scraper rightmove-data-admin rightmove-data-backend rightmove-data-react-frontend; do
+   for repo in rightmove-data-scraper rightmove-data-admin rightmove-data-backend rightmove-data-react-frontend rightmove-data-maps rightmove-property-notes; do
      gh issue list -R ianmiell/$repo -l agent-task --state open --json number,title,body,labels,updatedAt
    done
    ```

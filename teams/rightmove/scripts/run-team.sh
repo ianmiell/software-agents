@@ -13,7 +13,7 @@ IDLE_SLEEP=3600   # 1 hour when nothing to do
 WORK_SLEEP=300    # 5 minutes between tasks
 
 # Patterns that indicate the agent had nothing to do this cycle
-IDLE_PATTERNS="no agent-task issues open|no anomalies found|no findings|no open issues|no concerns found|nothing to do"
+IDLE_PATTERNS="no agent-task issues open|no anomalies found|no findings|no open issues|no concerns found|nothing to do|no issues to triage"
 
 agent_loop() {
   local name="$1"
@@ -53,6 +53,9 @@ echo ""
 agent_loop log-reviewer &
 LOG_REVIEWER_PID=$!
 
+agent_loop triage &
+TRIAGE_PID=$!
+
 agent_loop engineer &
 ENGINEER_PID=$!
 
@@ -62,9 +65,9 @@ CODE_REVIEWER_PID=$!
 manager_loop &
 MANAGER_PID=$!
 
-echo "PIDs: log-reviewer=$LOG_REVIEWER_PID engineer=$ENGINEER_PID code-reviewer=$CODE_REVIEWER_PID manager=$MANAGER_PID"
+echo "PIDs: log-reviewer=$LOG_REVIEWER_PID triage=$TRIAGE_PID engineer=$ENGINEER_PID code-reviewer=$CODE_REVIEWER_PID manager=$MANAGER_PID"
 
 # Trap ctrl-c and kill all children cleanly
-trap "echo 'Stopping team...'; kill $LOG_REVIEWER_PID $ENGINEER_PID $CODE_REVIEWER_PID $MANAGER_PID 2>/dev/null; exit 0" INT TERM
+trap "echo 'Stopping team...'; kill $LOG_REVIEWER_PID $TRIAGE_PID $ENGINEER_PID $CODE_REVIEWER_PID $MANAGER_PID 2>/dev/null; exit 0" INT TERM
 
 wait
