@@ -5,13 +5,13 @@ set -e
 REPO_DIR="/home/imiell/git/rightmove-data-scraper"
 LOG_OUT="$REPO_DIR/logs/agent-manager.log"
 
-echo "$(date -u): manager starting" >> "$LOG_OUT"
+echo "$(date -u): manager starting" | tee -a "$LOG_OUT"
 
 claude \
   --dangerously-skip-permissions \
   --model claude-haiku-5-5 \
   --agent manager \
   -p "Run your daily team oversight checks across all rightmove-* repos as instructed." \
-  >> "$LOG_OUT" 2>&1
+  2>&1 | tee -a "$LOG_OUT"
 
-echo "$(date -u): manager done" >> "$LOG_OUT"
+echo "$(date -u): manager done" | tee -a "$LOG_OUT"

@@ -5,7 +5,7 @@ set -e
 REPO_DIR="/home/imiell/git/rightmove-data-scraper"
 LOG_OUT="$REPO_DIR/logs/agent-code-reviewer.log"
 
-echo "$(date -u): code-reviewer starting" >> "$LOG_OUT"
+echo "$(date -u): code-reviewer starting" | tee -a "$LOG_OUT"
 
 cd "$REPO_DIR"
 
@@ -14,6 +14,6 @@ claude \
   --model claude-sonnet-5-5 \
   --agent code-reviewer \
   -p "Review commits from the last 5 hours across all rightmove-* repos and any open needs-review PRs. Raise GitHub issues for any findings as instructed." \
-  >> "$LOG_OUT" 2>&1
+  2>&1 | tee -a "$LOG_OUT"
 
-echo "$(date -u): code-reviewer done" >> "$LOG_OUT"
+echo "$(date -u): code-reviewer done" | tee -a "$LOG_OUT"
