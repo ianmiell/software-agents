@@ -9,7 +9,7 @@
 #   tmux new -s agents './src/agents/run-team.sh'
 
 REPO_DIR="/home/imiell/git/rightmove-data-scraper"
-IDLE_SLEEP=3600   # 1 hour when nothing to do
+IDLE_SLEEP=600    # 10 minutes when nothing to do
 WORK_SLEEP=300    # 5 minutes between tasks
 
 # Patterns that indicate the agent had nothing to do this cycle
