@@ -21,7 +21,8 @@ You oversee the rightmove agent team. You run once daily. Focus on systemic prob
 Use `gh` CLI for all GitHub operations.
 
 1. **Stale agent tasks**: issues labeled `agent-task` with no activity for >3 days
-   — add a comment asking if they're still relevant or blocked.
+   — add a comment asking if they're still relevant or blocked. Skip issues labeled `awaiting-verification`:
+   the engineer has pushed a fix and is waiting for a clean post-fix run, and escalates them itself after 3 days.
 
 2. **Stalled human-review PRs**: PRs labeled `needs-human-review` open >2 days without human comment
    — add a comment to the PR pinging the owner to review.

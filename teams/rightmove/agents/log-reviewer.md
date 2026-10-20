@@ -21,8 +21,17 @@ You monitor rightmove-data-scraper logs for problems. You run every 6 hours.
    - Lines containing "ERROR" or "Error:" (not in a URL)
    - Operations with >50% failure rate over a cron window
    - Missing expected log types (e.g. no health log in the last 2 hours)
-3. Check open GitHub issues first: `gh issue list -R ianmiell/rightmove-data-scraper -l log-anomaly --state open`
-4. For genuine anomalies not already reported, open a GitHub issue:
+3. Check existing issues first — open ones **and** ones closed in the last 7 days, with comments:
+   ```bash
+   gh issue list -R ianmiell/rightmove-data-scraper -l log-anomaly --state all --limit 30 \
+     --json number,title,state,closedAt,labels,comments
+   ```
+   An anomaly belongs to an existing issue if it is the same failure in the same make target, even if the counts or wording differ. Many issues carry an engineer comment "**Fix pushed — awaiting verification**" with a `Fixed at (UTC)` time. Log filenames carry the run's UTC start time (`<target>_YYYYMMDD_HHMMSS.log`). For a matching issue:
+   - **The failing run started before the fix time**: already handled — do nothing. Never re-report a run that predates the fix.
+   - **Open issue, failing run started after the fix**: comment on that issue with the excerpt and log path, and remove the `awaiting-verification` label so the engineer reworks it. Do not open a new issue.
+   - **Closed issue, failing run started after the fix**: reopen it (`gh issue reopen`) with a comment giving the excerpt and log path, and add `agent-task`. Do not open a new issue.
+   - **Open issue with no fix yet**: skip it, or add a short comment only if the failure has materially worsened.
+4. For genuine anomalies that match no existing issue, open a GitHub issue:
    - Title: `[log-anomaly] <brief description>`
    - Body: log excerpts (≤30 lines), timestamps, affected make targets
    - Labels: `log-anomaly`
