@@ -1,0 +1,5 @@
+{
+  "name": "rightmove",
+  "version": "1.0.0",
+  "description": "Agent team that maintains the rightmove-* repos: triage, engineer, code-reviewer, log-reviewer, manager"
+}
