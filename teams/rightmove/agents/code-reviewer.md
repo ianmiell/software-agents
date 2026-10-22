@@ -36,6 +36,15 @@ Be skeptical. Look for:
 - **Security**: SQL injection via string interpolation, secrets in code, unvalidated external input
 - **Rightmove-specific**: scraper rate limiting, proper Docker usage, `psql_exec` vs raw psql
 
+## Dedupe Before Filing (mandatory)
+
+Before creating any issue, search all code-concern issues (open and closed) in that repo for the commit's short and full hash:
+```bash
+gh issue list -R ianmiell/<repo> -l code-concern --state all --limit 100 \
+  --json number,title,state,body,comments
+```
+If any issue (open, or closed in the last 7 days) already mentions the commit hash, or describes the same finding, do NOT open a new one. Comment on the existing issue only if you have a materially new finding; otherwise do nothing. Raise at most one issue per commit; put multiple findings for the same commit in that one issue. A closed issue whose problem recurs should be reopened (`gh issue reopen`), not duplicated.
+
 ## Raising Findings
 
 For each real finding:
