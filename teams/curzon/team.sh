@@ -1,10 +1,11 @@
 # Team config for the curzon agent team. Sourced by bin/run-agent and bin/run-team.
 
-# Agents run from their own clone of curzon-listings, not the live checkout
-# (~/git/curzon-listings, which cron runs the scrape from and which publishes
-# to /var/www/ianmiell.com/curzon-listings). They push to origin; a human
-# deploys with git pull (and make install where needed) in the live checkout.
-WORK_DIR=/home/imiell/git/curzon-listings-agents
+# Agents run from their own clone of curzon-listings, kept inside this repo
+# under work/ (gitignored), not the live checkout (~/git/curzon-listings, which
+# cron runs the scrape from and which publishes to
+# /var/www/ianmiell.com/curzon-listings). They push to origin; a human deploys
+# with git pull (and make install where needed) in the live checkout.
+WORK_DIR=/home/imiell/git/software-agents/work/curzon-listings
 LIVE_DIR=/home/imiell/git/curzon-listings
 LOG_DIR=/home/imiell/git/software-agents/logs/curzon
 
