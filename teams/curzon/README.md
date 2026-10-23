@@ -1,50 +1,52 @@
 # curzon agent team
 
 Maintains [`ianmiell/curzon-listings`](https://github.com/ianmiell/curzon-listings),
-which scrapes London Curzon cinema showtimes from curzon.com with puppeteer,
-loads them into SQLite and publishes a plain-text listings page to
-`/var/www/ianmiell.com/curzon-listings`. The repo's `AGENTS.md` holds how the
-pipeline works; the agents read it because they run in the repo.
+a Flask web app that scrapes London Curzon cinema showtimes from curzon.com
+(headless Chrome for an API token, then Curzon's OCAPI) and serves them at
+https://ianmiell.com/curzon-listings/. It runs as the systemd unit
+`curzon_listings` (gunicorn, 127.0.0.1:6752) from the live checkout. The repo's
+`AGENTS.md` holds how the app works; the agents read it because they run in
+the repo.
 
 ## Roles
 
 | Agent | Model | Role |
 |---|---|---|
-| **monitor** | haiku | Checks the capture, database and published file for staleness, missing venues and errors; opens `listings-anomaly` issues |
+| **monitor** | haiku | Checks the service, `/health`, per-cinema showtime counts, the journal and the public URL; opens `listings-anomaly` issues |
 | **triage** | haiku | Labels un-triaged issues `agent-task` (engineer) or `needs-human-review`, then `triaged` |
 | **engineer** | sonnet | Works `agent-task` issues; pushes safe fixes to main, opens PRs for the rest |
 | **code-reviewer** | sonnet | Adversarially reviews new commits on main (anyone's) and open PRs; opens `code-concern` issues |
 
-There is no manager: it is one small repo. There is no log-reviewer either:
-the pipeline is a cron job, so the monitor checks its outputs (and the cron log,
-if the crontab redirects to one).
+There is no manager: it is one small repo. The monitor also does the
+log-reviewer's job (the `curzon_listings` journal).
 
 ## How it works
 
-- **The agents run in the live checkout**, `~/git/curzon-listings`, which
-  cron runs the scrape from. Cron rewrites `curzon_listings.txt` there, so that
-  file being modified is normal.
-- **The engineer never edits or runs the pipeline in the live checkout.** It
-  works in a throwaway worktree in `/tmp` (the scripts write the database,
-  tokens and listings relative to the current directory, and its check strips
-  the `/var/www` copy), pushes to main, then `git pull --ff-only`s the live
-  checkout. So a fix goes live at the next cron run.
+- **The agents run in the live checkout**, `~/git/curzon-listings`, which the
+  service runs from. `venv/` and `cache/` there are the service's and untracked.
+- **The engineer never edits or runs the app in the live checkout.** It works
+  in a throwaway worktree in `/tmp`, checks with the live venv's Python by
+  path (render every route through the Flask test client against a copy of the
+  live cache, and a live scrape if it touched the scraper), pushes to main, then
+  `git pull --ff-only`s the live checkout.
+- **Deploying Python and template changes needs you.** Agents can't `sudo`, so
+  a pulled fix to `*.py` or `templates/` only runs after you `make restart` in
+  `~/git/curzon-listings`. `static/` and `curzon_config.ini` changes apply as
+  soon as they are pulled.
 - **The engineer leaves your work alone.** If the live checkout isn't on
-  `main`, or has uncommitted changes other than `curzon_listings.txt`, it skips
-  the cycle and doesn't pull. A fix still not pulled after 24 hours gets a
-  `needs-human-review` reminder.
-- **Agents cannot `make install`** (it needs `sudo`). Makefile and dependency
-  changes go through a PR, and you run `make install` after merging.
-- Runtime fixes stay `awaiting-verification` until a scheduled run has
-  published clean listings with the fix pulled in.
-- **`curzon_tokens*.json` hold bearer tokens.** All agents are told never to
-  commit them or quote their values in issues.
+  `main`, or has uncommitted tracked changes, it skips the cycle and doesn't
+  pull. A fix still not running after 24 hours gets a `needs-human-review`
+  reminder.
+- Runtime fixes stay `awaiting-verification` until the fix has been running
+  for two hours with the failure absent.
+- **The OCAPI token is a secret.** All agents are told never to log, commit or
+  quote it.
 
 ## Setup (once)
 
-The engineer needs `node` (with puppeteer's Chrome in `~/.cache/puppeteer`),
-`jq`, `sqlite3` and `python3` on `PATH`, and uses the live checkout's
-`node_modules`. Create the labels on the repo (see below).
+The service needs Google Chrome (`/usr/bin/google-chrome`) and the venv from
+`make install`; the engineer reuses that venv and needs `gh` and `curl`.
+Create the labels on the repo (see below).
 
 ## Running
 
@@ -75,11 +77,12 @@ a `needs-human-review` issue to the engineer, swap the label to `agent-task`.
 
 ## What goes to main without human review
 
-Fixes to the capture JS, jq parsing, `import_showtimes.py` and the query SQL,
-small additive features, and docs. The `Makefile`, the publish path, the
-crontab, `package.json`/`package-lock.json`, your VENUE GUIDE and FILMS SEEN
-notes, which venues are listed, and removals go through a PR labeled
-`needs-human-review`.
+Fixes to `curzon.py`, `app.py`, `templates/` and `static/` that pass the
+engineer's check, small additive features, and docs. `requirements.txt`, the
+`Makefile`, `deploy/` (systemd unit, nginx snippet), `cat_listings.sh` (the
+webhook), `curzon_config.ini` (your venue notes, films seen, sites, refresh
+interval), removals, and anything that makes the scraper hit curzon.com more
+often go through a PR labeled `needs-human-review`.
 
 ## GitHub labels
 
@@ -88,11 +91,11 @@ notes, which venues are listed, and removals go through a PR labeled
 | `agent-task` | human, triage | Task for the engineer |
 | `agent-task-high` | human | High-priority engineer task |
 | `triaged` | triage | Already triaged; triage skips it |
-| `listings-anomaly` | monitor | Stale, empty or incomplete listings, or a failed capture |
+| `listings-anomaly` | monitor | Service down, public URL failing, stale or incomplete listings, or repeated scrape errors |
 | `code-concern` | code-reviewer | Bug or risk in a commit |
 | `critical` | code-reviewer | Requires immediate attention |
 | `needs-human-review` | triage, engineer | Needs a human decision, approval or deploy |
-| `awaiting-verification` | engineer | Fix pushed; waiting for a deploy and a clean scheduled run |
+| `awaiting-verification` | engineer | Fix pushed; waiting for a deploy (pull, and restart for Python/templates) and two clean hours |
 
 ```bash
 for label in "agent-task:0075ca:Task for the engineer agent" \
