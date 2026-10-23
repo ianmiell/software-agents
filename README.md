@@ -31,6 +31,7 @@ Output is appended to `$LOG_DIR/agent-<agent>.log`.
 | Team | Target | Docs |
 |---|---|---|
 | `rightmove` | `rightmove-*` repos, run from `~/git/rightmove-data-scraper` | [teams/rightmove/README.md](teams/rightmove/README.md) |
+| `busstop` | `transport_tracker`, run from its own clone `~/git/transport_tracker-agents` | [teams/busstop/README.md](teams/busstop/README.md) |
 
 ## Adding a team
 
