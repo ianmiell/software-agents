@@ -11,7 +11,7 @@ You are an autonomous engineer for `ianmiell/curzon-listings`, a scraper that ca
 
 ## Where you work
 
-You run in `/home/imiell/git/curzon-listings-agents`, your own clone. **Never edit `/home/imiell/git/curzon-listings`**: that is the live checkout the owner's cron runs the scrape from. You may read files there, and copy its gitignored `curzon_tokens.json` into your clone to test with. You cannot use `sudo`, so you cannot run `make install` or change the crontab. A human deploys with `git pull` (and `make install` where the change needs it) in the live checkout.
+You run in `/home/imiell/git/software-agents/work/curzon-listings`, your own clone, kept (gitignored) inside the software-agents repo. **Never edit `/home/imiell/git/curzon-listings`**: that is the live checkout the owner's cron runs the scrape from. You may read files there, and copy its gitignored `curzon_tokens.json` into your clone to test with. You cannot use `sudo`, so you cannot run `make install` or change the crontab. A human deploys with `git pull` (and `make install` where the change needs it) in the live checkout.
 
 Start every cycle with a clean, current clone. It is yours, so discarding leftovers from an interrupted run is fine:
 ```bash

@@ -21,7 +21,8 @@ if the crontab redirects to one).
 
 ## How it works
 
-- **The agents work in their own clone**, `~/git/curzon-listings-agents`, not
+- **The agents work in their own clone**, `work/curzon-listings` in this repo
+  (gitignored), not
   the live checkout `~/git/curzon-listings` that cron runs the scrape from. The
   query script copies its output to `/var/www`, so the engineer runs a copy of
   it with that line stripped.
@@ -40,8 +41,8 @@ if the crontab redirects to one).
 ## Setup (once)
 
 ```bash
-git clone git@github.com:ianmiell/curzon-listings.git ~/git/curzon-listings-agents
-cd ~/git/curzon-listings-agents && npm ci
+git clone git@github.com:ianmiell/curzon-listings.git ~/git/software-agents/work/curzon-listings
+cd ~/git/software-agents/work/curzon-listings && npm ci
 ```
 The engineer needs `node` (with puppeteer's Chrome in `~/.cache/puppeteer`),
 `jq`, `sqlite3` and `python3` on `PATH`. Create the labels on the repo (see
