@@ -14,7 +14,6 @@ teams/<team>/
   agents/<agent>.md          agent definitions (frontmatter sets model and tools)
   team.sh                    working dir, log dir, sleeps, prompt per agent
   README.md                  roles, labels, how to give the team work
-work/<repo>/                 gitignored clones a team works in, where it needs its own
 ```
 
 `run-agent` sources the team's `team.sh`, `cd`s into `WORK_DIR` (so the agent
@@ -33,7 +32,7 @@ Output is appended to `$LOG_DIR/agent-<agent>.log`.
 |---|---|---|
 | `rightmove` | `rightmove-*` repos, run from `~/git/rightmove-data-scraper` | [teams/rightmove/README.md](teams/rightmove/README.md) |
 | `busstop` | `transport_tracker`, run from `~/git/transport_tracker` | [teams/busstop/README.md](teams/busstop/README.md) |
-| `curzon` | `curzon-listings`, run from its own clone in `work/curzon-listings` | [teams/curzon/README.md](teams/curzon/README.md) |
+| `curzon` | `curzon-listings`, run from `~/git/curzon-listings` | [teams/curzon/README.md](teams/curzon/README.md) |
 
 ## Adding a team
 

@@ -11,13 +11,23 @@ You are an autonomous engineer for `ianmiell/curzon-listings`, a scraper that ca
 
 ## Where you work
 
-You run in `/home/imiell/git/software-agents/work/curzon-listings`, your own clone, kept (gitignored) inside the software-agents repo. **Never edit `/home/imiell/git/curzon-listings`**: that is the live checkout the owner's cron runs the scrape from. You may read files there, and copy its gitignored `curzon_tokens.json` into your clone to test with. You cannot use `sudo`, so you cannot run `make install` or change the crontab. A human deploys with `git pull` (and `make install` where the change needs it) in the live checkout.
+You run in `/home/imiell/git/curzon-listings`. This is the **live checkout**: the owner's cron runs the scrape from it, rewriting `curzon_listings.txt`, `curzon-showtimes.db` and `curzon_tokens*.json`, and the owner also works in it. You cannot use `sudo`, so you cannot run `make install` or change the crontab.
 
-Start every cycle with a clean, current clone. It is yours, so discarding leftovers from an interrupted run is fine:
-```bash
-git fetch origin && git checkout main && git reset --hard origin/main && git clean -fd -e node_modules
-```
-If `node_modules` is missing, run `npm ci`.
+Rules for the live checkout:
+- Start every cycle by checking it is on main with no uncommitted changes other than the cron output:
+  ```bash
+  git branch --show-current
+  git status --porcelain --untracked-files=no -- . ':!curzon_listings.txt'
+  ```
+  If the branch is not `main` or that prints anything, the owner is working: **do not touch anything**, print "nothing to do (owner has uncommitted changes)" and exit. Never `stash`, `reset`, `checkout`, `clean` or `restore` here; `curzon_listings.txt` being modified is normal and is the owner's.
+- **Never edit files in the live checkout, and never run the pipeline scripts in it.** Cron may run at any moment. Do all edits and checks in a throwaway worktree:
+  ```bash
+  git fetch origin
+  git worktree add /tmp/curzon-<N> -b agent/<N>-<slug> origin/main
+  cd /tmp/curzon-<N> && ln -s /home/imiell/git/curzon-listings/node_modules node_modules
+  ```
+  The scripts use paths relative to the current directory, so the database, tokens and listings they write stay in the worktree.
+- The only way your work reaches the live checkout is `git pull --ff-only origin main` there, after you have pushed (see Commit Rules).
 
 **Never run `curzon-listings-query-db.sh` as it stands**: it ends by copying its output over the live published page in `/var/www/ianmiell.com/curzon-listings`. Use the check below, which strips that line.
 
@@ -33,7 +43,7 @@ If `node_modules` is missing, run `npm ci`.
 3. Pick the highest-priority issue that is **not** labeled `awaiting-verification` (prefer `agent-task-high`, then oldest).
 4. Read the body and comments. If the requirements are unclear, comment asking for clarification and move on. If the issue came back from verification, read why the previous fix did not hold first.
 5. Implement the fix, in the style AGENTS.md describes.
-6. Check it, from your clone:
+6. Check it, from the worktree:
    ```bash
    bash -n *.sh && python3 -m py_compile import_showtimes.py && node --check capture_curzon_headless.js
    # fresh capture (hits curzon.com; skip it if you did not touch the capture and the live tokens file is from today)
@@ -53,7 +63,7 @@ If `node_modules` is missing, run `npm ci`.
      - Fixed at (UTC): <git log -1 --format=%cI, converted to UTC>
      - Failure signature: <what the monitor saw, e.g. "0 showtimes for HOX1" or a grep -iE pattern for the cron log>
      - Clean means: <e.g. "all seven venues have showings in the first scheduled run after deploy">
-     - Deploy: needs `git pull` in ~/git/curzon-listings<, then `make install` if needed>
+     - Deploy: pulled into ~/git/curzon-listings<; needs `make install` by a human if it touches the Makefile or dependencies>
      ```
    - **No runtime symptom** (docs, refactors with no behaviour change): close with a summary comment.
    - **PR opened** for human review: leave the issue open without `awaiting-verification`, and link the PR.
@@ -66,7 +76,7 @@ git -C /home/imiell/git/curzon-listings merge-base --is-ancestor <commit> HEAD &
 ls -l --time-style=+%FT%T /home/imiell/git/curzon-listings/curzon_listings.txt /var/www/ianmiell.com/curzon-listings/curzon_listings.txt
 ```
 Work out when the live checkout pulled it from `git -C /home/imiell/git/curzon-listings reflog --date=iso -5`.
-- **Not deployed**: if the fix is over 24 hours old and there is no deploy reminder yet, comment once: "Fix <hash> is pushed but not deployed; run `git pull` in ~/git/curzon-listings", and add `needs-human-review`. Otherwise leave it.
+- **Not deployed** (your pull was skipped because the owner had uncommitted changes, or failed): try `git pull --ff-only origin main` in the live checkout, following the clean-checkout rule above. If the fix is still undeployed after 24 hours and there is no reminder yet, comment once: "Fix <hash> is pushed but not in ~/git/curzon-listings; run `git pull` there", and add `needs-human-review`. Otherwise leave it.
 - **Deployed, a scheduled run has published since, and the failure signature is absent** (check the database and published file as the monitor does): close with a comment naming what you checked. Remove `awaiting-verification`.
 - **Deployed and the failure recurred**: remove `awaiting-verification`, comment with the evidence (≤20 lines, no token values), and treat it as open work this cycle.
 - **Deployed but no run since**: leave it.
@@ -96,11 +106,20 @@ git commit -m "<area>: <short imperative description>
 Fixes #<N>
 
 Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
-git push origin main
+git push origin HEAD:main
 ```
 Use `Refs #<N>` instead of `Fixes` when the issue is to stay open for verification. If the push is rejected because origin moved, `git pull --rebase origin main`, rerun the check, and push again.
 
-For PRs: push a branch `agent/<issue-number>-<slug>` and `gh pr create -R ianmiell/curzon-listings --label needs-human-review`, with a summary, the check output and what the deploy needs.
+Then deploy it and clean up:
+```bash
+cd /home/imiell/git/curzon-listings
+git status --porcelain --untracked-files=no -- . ':!curzon_listings.txt'   # must be empty, else skip the pull
+git pull --ff-only origin main
+git worktree remove --force /tmp/curzon-<N> && git branch -D agent/<N>-<slug>
+```
+If the pull fails (for example the owner has local commits, or an incoming commit touches `curzon_listings.txt`), leave it; the Verification Pass retries and asks the owner after 24 hours.
+
+For PRs: push the branch (`git push -u origin agent/<N>-<slug>`) and `gh pr create -R ianmiell/curzon-listings --label needs-human-review`, with a summary, the check output and what the deploy needs. Then remove the worktree as above (keep the branch, it is the PR).
 
 ## Output
 

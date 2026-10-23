@@ -4,7 +4,7 @@ Maintains [`ianmiell/curzon-listings`](https://github.com/ianmiell/curzon-listin
 which scrapes London Curzon cinema showtimes from curzon.com with puppeteer,
 loads them into SQLite and publishes a plain-text listings page to
 `/var/www/ianmiell.com/curzon-listings`. The repo's `AGENTS.md` holds how the
-pipeline works; the agents read it because they run in a clone of the repo.
+pipeline works; the agents read it because they run in the repo.
 
 ## Roles
 
@@ -21,32 +21,30 @@ if the crontab redirects to one).
 
 ## How it works
 
-- **The agents work in their own clone**, `work/curzon-listings` in this repo
-  (gitignored), not
-  the live checkout `~/git/curzon-listings` that cron runs the scrape from. The
-  query script copies its output to `/var/www`, so the engineer runs a copy of
-  it with that line stripped.
-- **Agents cannot deploy.** A pushed fix goes live only when you run, in the
-  live checkout:
-  ```bash
-  git pull          # cron rewrites curzon_listings.txt, so commit or checkout it first
-  make install      # only for changes that need it (Makefile, node_modules, puppeteer)
-  ```
-  The engineer leaves runtime fixes `awaiting-verification` and only closes
-  them after a scheduled run has published clean listings with the fix
-  deployed. After 24 hours undeployed it asks you, with `needs-human-review`.
+- **The agents run in the live checkout**, `~/git/curzon-listings`, which
+  cron runs the scrape from. Cron rewrites `curzon_listings.txt` there, so that
+  file being modified is normal.
+- **The engineer never edits or runs the pipeline in the live checkout.** It
+  works in a throwaway worktree in `/tmp` (the scripts write the database,
+  tokens and listings relative to the current directory, and its check strips
+  the `/var/www` copy), pushes to main, then `git pull --ff-only`s the live
+  checkout. So a fix goes live at the next cron run.
+- **The engineer leaves your work alone.** If the live checkout isn't on
+  `main`, or has uncommitted changes other than `curzon_listings.txt`, it skips
+  the cycle and doesn't pull. A fix still not pulled after 24 hours gets a
+  `needs-human-review` reminder.
+- **Agents cannot `make install`** (it needs `sudo`). Makefile and dependency
+  changes go through a PR, and you run `make install` after merging.
+- Runtime fixes stay `awaiting-verification` until a scheduled run has
+  published clean listings with the fix pulled in.
 - **`curzon_tokens*.json` hold bearer tokens.** All agents are told never to
   commit them or quote their values in issues.
 
 ## Setup (once)
 
-```bash
-git clone git@github.com:ianmiell/curzon-listings.git ~/git/software-agents/work/curzon-listings
-cd ~/git/software-agents/work/curzon-listings && npm ci
-```
 The engineer needs `node` (with puppeteer's Chrome in `~/.cache/puppeteer`),
-`jq`, `sqlite3` and `python3` on `PATH`. Create the labels on the repo (see
-below).
+`jq`, `sqlite3` and `python3` on `PATH`, and uses the live checkout's
+`node_modules`. Create the labels on the repo (see below).
 
 ## Running
 

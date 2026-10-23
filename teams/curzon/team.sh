@@ -1,12 +1,9 @@
 # Team config for the curzon agent team. Sourced by bin/run-agent and bin/run-team.
 
-# Agents run from their own clone of curzon-listings, kept inside this repo
-# under work/ (gitignored), not the live checkout (~/git/curzon-listings, which
-# cron runs the scrape from and which publishes to
-# /var/www/ianmiell.com/curzon-listings). They push to origin; a human deploys
-# with git pull (and make install where needed) in the live checkout.
-WORK_DIR=/home/imiell/git/software-agents/work/curzon-listings
-LIVE_DIR=/home/imiell/git/curzon-listings
+# Agents run from here, so they get this repo's git context and AGENTS.md.
+# It is also the live checkout cron runs the scrape from; the engineer edits
+# and tests in /tmp worktrees and only fast-forwards this checkout.
+WORK_DIR=/home/imiell/git/curzon-listings
 LOG_DIR=/home/imiell/git/software-agents/logs/curzon
 
 # run-team: seconds to sleep after an idle cycle, and after a cycle that did work.
@@ -22,7 +19,7 @@ AGENTS=(monitor triage engineer code-reviewer)
 FIXED_SLEEP_AGENTS=(monitor)
 
 declare -A PROMPT=(
-  [monitor]="Check the curzon-listings pipeline in $LIVE_DIR and the published listings for freshness and completeness. Raise or update GitHub issues on ianmiell/curzon-listings as instructed."
+  [monitor]="Check the curzon-listings pipeline in $WORK_DIR (the live dir) and the published listings for freshness and completeness. Raise or update GitHub issues on ianmiell/curzon-listings as instructed."
   [triage]="Triage all open GitHub issues on ianmiell/curzon-listings. Comment on each un-triaged issue with who should handle it and label accordingly. Follow all rules in your agent definition."
   [engineer]="Check for open agent-task GitHub issues on ianmiell/curzon-listings and work on the highest priority one. Follow all rules in your agent definition."
   [code-reviewer]="Review new commits on origin/main of ianmiell/curzon-listings and any open needs-review PRs. Raise GitHub issues for any findings as instructed. Your reviewed-commits file is $LOG_DIR/code-reviewer-reviewed.txt"
