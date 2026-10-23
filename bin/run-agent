@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# Run one agent of a team once.
+#
+# Usage: bin/run-agent <team> <agent>
+#
+# Sources teams/<team>/team.sh, cds into its WORK_DIR (so the agent sees that
+# repo's git context and AGENTS.md) and runs the agent with the model from its
+# frontmatter and the prompt from PROMPT[<agent>]. Output is appended to
+# $LOG_DIR/agent-<agent>.log.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <team> <agent>" >&2
+  exit 1
+fi
+team="$1"
+agent="$2"
+team_dir="$ROOT/teams/$team"
+agent_file="$team_dir/agents/$agent.md"
+
+if [ ! -f "$team_dir/team.sh" ]; then
+  echo "No team '$team' (missing $team_dir/team.sh)" >&2
+  exit 1
+fi
+if [ ! -f "$agent_file" ]; then
+  echo "No agent '$agent' in team '$team' (missing $agent_file)" >&2
+  exit 1
+fi
+
+# shellcheck source=/dev/null
+source "$team_dir/team.sh"
+
+prompt="${PROMPT[$agent]:-}"
+if [ -z "$prompt" ]; then
+  echo "No PROMPT[$agent] in $team_dir/team.sh" >&2
+  exit 1
+fi
+# The model: line in the frontmatter (the block between the first two ---).
+model="$(awk '/^---$/ { n++; next } n == 1 && /^model:/ { sub(/^model:[ \t]*/, ""); print; exit }' "$agent_file")"
+if [ -z "$model" ]; then
+  echo "No model: in the frontmatter of $agent_file" >&2
+  exit 1
+fi
+if [ ! -d "$WORK_DIR" ]; then
+  echo "WORK_DIR $WORK_DIR does not exist; see teams/$team/README.md for setup" >&2
+  exit 1
+fi
+
+mkdir -p "$LOG_DIR"
+log="$LOG_DIR/agent-$agent.log"
+
+echo "$(date -u): $team:$agent starting ($model, in $WORK_DIR)" | tee -a "$log"
+cd "$WORK_DIR"
+status=0
+claude \
+  --dangerously-skip-permissions \
+  --plugin-dir "$team_dir" \
+  --model "$model" \
+  --agent "$team:$agent" \
+  -p "$prompt" \
+  2>&1 | tee -a "$log" || status=$?
+echo "$(date -u): $team:$agent done (exit $status)" | tee -a "$log"
+exit "$status"
