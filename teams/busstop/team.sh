@@ -21,5 +21,5 @@ declare -A PROMPT=(
   [log-reviewer]="Run your log review of the busstop_server journal for the last hour and the health check. Raise or update GitHub issues on ianmiell/transport_tracker as instructed."
   [triage]="Triage all open GitHub issues on ianmiell/transport_tracker. Comment on each un-triaged issue with who should handle it and label accordingly. Follow all rules in your agent definition."
   [engineer]="Check for open agent-task GitHub issues on ianmiell/transport_tracker and work on the highest priority one. Follow all rules in your agent definition."
-  [code-reviewer]="Review new commits on origin/main of ianmiell/transport_tracker and any open needs-review PRs. Your list of already-reviewed commits is $LOG_DIR/code-reviewer-reviewed.txt. Raise GitHub issues for any findings as instructed."
+  [code-reviewer]="Review new commits on origin/main of ianmiell/transport_tracker and any open needs-review PRs. Raise GitHub issues for any findings as instructed. Your reviewed-commits file is $LOG_DIR/code-reviewer-reviewed.txt"
 )
