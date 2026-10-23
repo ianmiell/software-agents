@@ -1,9 +1,9 @@
 # Team config for the busstop agent team. Sourced by bin/run-agent and bin/run-team.
 
-# Agents run from their own clone of transport_tracker, not the live checkout
-# (~/git/transport_tracker, which gunicorn and nginx serve from). They push to
-# origin; a human deploys with scripts/busstop.sh update in the live checkout.
-WORK_DIR=/home/imiell/git/transport_tracker-agents
+# Agents run from here, so they get this repo's git context and AGENTS.md.
+# It is also the live checkout gunicorn and nginx serve from; a human restarts
+# the service (scripts/busstop.sh restart) to deploy Python/template changes.
+WORK_DIR=/home/imiell/git/transport_tracker
 LOG_DIR=/home/imiell/git/software-agents/logs/busstop
 
 # run-team: seconds to sleep after an idle cycle, and after a cycle that did work.

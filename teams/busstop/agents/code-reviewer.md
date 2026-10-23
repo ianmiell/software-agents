@@ -26,7 +26,8 @@ You are an adversarial code reviewer for `ianmiell/transport_tracker`. Your job 
 ## What to Look For
 
 - **Request context**: anything reachable from `update_stops` or the context processor that touches `request`, `session` or cookies without `has_request_context()`. This breaks every live push.
-- **Turbo**: JS that grabs nodes inside `#all_stops` once at load instead of on `turbo:render` or with delegated listeners.
+- **Turbo**: JS that grabs nodes inside `#all_stops` once at load instead of using delegated listeners, or relies on `turbo:render` for stream updates (Turbo 8 doesn't fire it; wrap `event.detail.render` in `turbo:before-stream-render`).
+- **Secrets**: the RDM key (`RDM_LDB_KEY`) in code, `busstop_config.ini`, logs or anything `/admin` shows.
 - **Cookie parsing**: `parse_stop_ids_cookie` (Python) and `parseStopIdsCookie` (JS) changed in one place but not the other.
 - **Updater robustness**: an exception in one stop's fetch that kills the whole update, or a fetch with no timeout that can hang the updater thread.
 - **Config**: `[lines]`/`[calling_at]` lookups that miss ConfigParser lower-casing, `:` in keys, config read once instead of each cycle.

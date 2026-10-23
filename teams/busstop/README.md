@@ -18,28 +18,21 @@ There is no manager: it is one small repo.
 
 ## How it differs from rightmove
 
-- **The agents work in their own clone**, `~/git/transport_tracker-agents`,
-  not the live checkout `~/git/transport_tracker` that gunicorn and nginx serve
-  from (nginx serves `static/` straight from disk, so a half-edited JS file in
-  the live checkout would go out immediately).
-- **Agents cannot deploy.** Restarting `busstop_server` needs `sudo`. A pushed
-  fix goes live only when you run, in the live checkout:
+- **The agents work in the live checkout**, `~/git/transport_tracker`, which
+  gunicorn runs and nginx serves `static/` from. JS/CSS changes the engineer
+  commits are public at once.
+- **The engineer leaves your work alone.** If the checkout has uncommitted
+  changes to tracked files, or isn't on `main`, it skips the cycle. It never
+  switches branches there; PR work happens in a throwaway worktree in `/tmp`.
+- **Agents cannot restart.** Restarting `busstop_server` needs `sudo`, so
+  Python and template fixes go live only when you run:
   ```bash
-  scripts/busstop.sh update     # git pull --ff-only, deps, restart, health check
+  scripts/busstop.sh restart
   ```
   The engineer leaves runtime fixes `awaiting-verification` and only closes
   them after an hour of clean journal following a restart that included the
   fix. After 24 hours undeployed it asks you, with `needs-human-review`.
-- Because the engineer pushes to main, pull before committing in the live
-  checkout, or `update` will refuse to fast-forward.
-
-## Setup (once)
-
-```bash
-git clone git@github.com:ianmiell/transport_tracker.git ~/git/transport_tracker-agents
-cd ~/git/transport_tracker-agents/flask_app && python3 -m venv venv && venv/bin/pip install -r requirements.txt
-```
-Labels are created on the repo (see below).
+- The engineer pushes to main, so pull before you push your own commits.
 
 ## Running
 
