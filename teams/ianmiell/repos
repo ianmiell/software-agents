@@ -7,7 +7,7 @@
 #   repos labels <repo>    create the team's labels on a watched repo
 #   repos mine <repo> <N>  whether ianmiell opened or updated issue/PR N: "<repo>#<N> <yes|no>"
 #
-# Watched means owned by ianmiell, not a fork, not archived and not in
+# Watched means owned by ianmiell (forks included), not archived and not in
 # ignore-repos.txt. Repos in pr-repos.txt are changed through PRs, the rest
 # directly on their default branch. ignore-repos.txt wins over pr-repos.txt.
 # Repos may be given as <repo> or ianmiell/<repo>.
@@ -44,7 +44,7 @@ owned=""
 ignore=""
 pr=""
 load() {
-  owned="$(gh repo list "$OWNER" --source --no-archived --limit 5000 --json name --jq '.[].name')"
+  owned="$(gh repo list "$OWNER" --no-archived --limit 5000 --json name --jq '.[].name')"
   ignore="$(read_list "$DIR/ignore-repos.txt")"
   pr="$(read_list "$DIR/pr-repos.txt")"
 }

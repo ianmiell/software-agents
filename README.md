@@ -34,7 +34,7 @@ Output is appended to `$LOG_DIR/agent-<agent>.log`.
 
 | Team | Target | Docs |
 |---|---|---|
-| `ianmiell` | every `ianmiell` GitHub repo except forks, archived repos and its ignore list | [teams/ianmiell/README.md](teams/ianmiell/README.md) |
+| `ianmiell` | every `ianmiell` GitHub repo, forks included, except archived repos and its ignore list | [teams/ianmiell/README.md](teams/ianmiell/README.md) |
 
 ## Running as a service
 

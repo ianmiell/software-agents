@@ -1,7 +1,7 @@
 # ianmiell agent team
 
 Maintains every repo owned by [`ianmiell`](https://github.com/ianmiell) on
-GitHub, except forks, archived repos and the repos in `ignore-repos.txt`.
+GitHub, forks included, except archived repos and the repos in `ignore-repos.txt`.
 Project knowledge belongs in each target repo's `AGENTS.md`; the agents read it
 before working there.
 
@@ -26,7 +26,8 @@ comments):
 | `pr-repos.txt` | The engineer opens a PR labeled `needs-human-review` instead of pushing to the default branch |
 
 **The ignore list wins**: a repo in both is ignored. Every other repo is worked
-directly on its default branch. Forks and archived repos are always ignored.
+directly on its default branch. Archived repos are always ignored; forks are
+watched like any other repo.
 
 ```bash
 teams/ianmiell/repos list               # watched repos and their mode
