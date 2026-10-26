@@ -62,4 +62,17 @@ claude \
   -p "$prompt" \
   2>&1 | tee -a "$log" || status=$?
 echo "$(date -u): $team:$agent done (exit $status)" | tee -a "$log"
+
+# If team.sh sets NOTIFY_TO, email when the agent starts failing and when it
+# recovers, not on every failed cycle.
+if [ -n "${NOTIFY_TO:-}" ]; then
+  failing="$LOG_DIR/agent-$agent.failing"
+  if [ "$status" -ne 0 ] && [ ! -e "$failing" ]; then
+    touch "$failing"
+    tail -n 40 "$log" | "$ROOT/bin/notify" "$team" "[$team] $agent failed (exit $status)" || true
+  elif [ "$status" -eq 0 ] && [ -e "$failing" ]; then
+    rm -f "$failing"
+    echo "$team:$agent ran cleanly again at $(date -u)." | "$ROOT/bin/notify" "$team" "[$team] $agent recovered" || true
+  fi
+fi
 exit "$status"

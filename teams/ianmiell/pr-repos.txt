@@ -1,0 +1,7 @@
+# Repos where the engineer opens a PR labeled needs-human-review instead of
+# pushing to the default branch. Every other watched repo is worked on directly.
+# One repo name per line (owner optional); # starts a comment.
+# A repo that is also in ignore-repos.txt is ignored.
+
+# This repo holds the agents' own definitions; changes to them get a human look.
+software-agents

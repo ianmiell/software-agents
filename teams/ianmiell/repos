@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+# Which of ianmiell's GitHub repos the ianmiell team watches, and how.
+#
+# Usage:
+#   repos list             every watched repo and its mode: "<repo> <main|pr>"
+#   repos mode <repo>...   each repo's mode: "<repo> <ignore|main|pr>"
+#   repos labels <repo>    create the team's labels on a watched repo
+#   repos mine <repo> <N>  whether ianmiell opened or updated issue/PR N: "<repo>#<N> <yes|no>"
+#
+# Watched means owned by ianmiell, not a fork, not archived and not in
+# ignore-repos.txt. Repos in pr-repos.txt are changed through PRs, the rest
+# directly on their default branch. ignore-repos.txt wins over pr-repos.txt.
+# Repos may be given as <repo> or ianmiell/<repo>.
+#
+# Updated means ianmiell commented on it or acted on it (labeled, edited,
+# closed, reopened, referenced it). The agents run as ianmiell too, but only
+# act on issues that are already mine, so they cannot make a stranger's issue
+# count as mine.
+set -euo pipefail
+
+OWNER=ianmiell
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+LABELS=(
+  "agent-task|0075ca|Task for the engineer agent"
+  "agent-task-high|e11d48|High-priority engineer task"
+  "triaged|c5def5|Triaged by the triage agent"
+  "code-concern|f9d0c4|Raised by code-reviewer"
+  "critical|b60205|Requires immediate attention"
+  "needs-human-review|0e8a16|Needs a human decision, approval or deploy"
+)
+
+# Repo names in a list file, without comments, blank lines or the owner.
+read_list() {
+  sed -e 's/#.*//' -e 's/[[:space:]]//g' -e "s|^$OWNER/||I" "$1" | grep -v '^$' || true
+}
+
+# GitHub repo names are case-insensitive.
+in_list() {
+  grep -qixF -- "$1" <<<"$2"
+}
+
+owned=""
+ignore=""
+pr=""
+load() {
+  owned="$(gh repo list "$OWNER" --source --no-archived --limit 5000 --json name --jq '.[].name')"
+  ignore="$(read_list "$DIR/ignore-repos.txt")"
+  pr="$(read_list "$DIR/pr-repos.txt")"
+}
+
+mode_of() {
+  local repo="$1"
+  if ! in_list "$repo" "$owned" || in_list "$repo" "$ignore"; then
+    echo ignore
+  elif in_list "$repo" "$pr"; then
+    echo pr
+  else
+    echo main
+  fi
+}
+
+# Whether $OWNER opened issue $2 in repo $1, commented on it, or acted on it.
+# Each list is read in full before grepping: grep -q exiting early would
+# kill gh with SIGPIPE and fail the pipeline under pipefail.
+is_mine() {
+  local api="repos/$OWNER/$1/issues/$2" logins
+  logins="$(gh api "$api" --jq '.user.login')"
+  logins+=$'\n'"$(gh api --paginate "$api/comments" --jq '.[].user.login')"
+  logins+=$'\n'"$(gh api --paginate "$api/events" --jq '.[].actor.login // empty')"
+  in_list "$OWNER" "$logins"
+}
+
+usage() {
+  sed -n '3,7p' "${BASH_SOURCE[0]}" | sed 's/^# //' >&2
+  exit 1
+}
+
+[ "$#" -ge 1 ] || usage
+cmd="$1"
+shift
+case "$cmd" in
+  list)
+    load
+    while read -r repo; do
+      mode="$(mode_of "$repo")"
+      [ "$mode" = ignore ] || echo "$repo $mode"
+    done <<<"$owned"
+    ;;
+  mode)
+    [ "$#" -ge 1 ] || usage
+    load
+    for repo in "$@"; do
+      repo="${repo#"$OWNER"/}"
+      echo "$repo $(mode_of "$repo")"
+    done
+    ;;
+  labels)
+    [ "$#" -eq 1 ] || usage
+    load
+    repo="${1#"$OWNER"/}"
+    if [ "$(mode_of "$repo")" = ignore ]; then
+      echo "$repo is ignored; not creating labels" >&2
+      exit 1
+    fi
+    for label in "${LABELS[@]}"; do
+      IFS='|' read -r name color desc <<<"$label"
+      gh label create "$name" --color "$color" --description "$desc" -R "$OWNER/$repo" >/dev/null 2>&1 || true
+    done
+    ;;
+  mine)
+    [ "$#" -eq 2 ] || usage
+    repo="${1#"$OWNER"/}"
+    if is_mine "$repo" "$2"; then
+      echo "$repo#$2 yes"
+    else
+      echo "$repo#$2 no"
+    fi
+    ;;
+  *)
+    usage
+    ;;
+esac

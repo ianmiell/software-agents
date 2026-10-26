@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+"""Email the owner about something an agent did.
+
+Usage: bin/notify <team> "<subject>" < body
+
+Sends only to NOTIFY_TO in teams/<team>/team.sh; the recipient cannot be set
+any other way. Sends over SMTP with settings from
+~/.config/software-agents/notify.env (or the file named by $NOTIFY_CONFIG):
+
+    SMTP_HOST=smtp.gmail.com
+    SMTP_PORT=587
+    SMTP_USER=you@gmail.com
+    SMTP_PASSWORD=<app password>
+
+Port 465 uses implicit TLS, any other port STARTTLS. Optional: NOTIFY_FROM
+(defaults to SMTP_USER), and SMTP_STARTTLS=0 for a local relay without TLS.
+Lines starting with # are comments; values are taken verbatim.
+
+Every notification is also appended to logs/notifications.log, sent or not,
+so nothing is lost while email is not configured. Exits non-zero if the
+email was not sent.
+"""
+import os
+import re
+import smtplib
+import sys
+from datetime import datetime, timezone
+from email.message import EmailMessage
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+CONFIG = Path(os.environ.get("NOTIFY_CONFIG", Path.home() / ".config/software-agents/notify.env"))
+LOG = ROOT / "logs" / "notifications.log"
+
+
+def read_config(path):
+    config = {}
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if "=" in line and not line.startswith("#"):
+            key, value = line.split("=", 1)
+            config[key.strip()] = value.strip().strip("'\"")
+    return config
+
+
+def recipient(team):
+    team_sh = ROOT / "teams" / team / "team.sh"
+    match = re.search(r"^NOTIFY_TO=(\S+)", team_sh.read_text(), re.MULTILINE)
+    if not match:
+        raise RuntimeError(f"no NOTIFY_TO in {team_sh}")
+    return match.group(1).strip("'\"")
+
+
+def send(config, to, subject, body):
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = config.get("NOTIFY_FROM") or config["SMTP_USER"]
+    msg["To"] = to
+    msg.set_content(body)
+    host = config["SMTP_HOST"]
+    port = int(config.get("SMTP_PORT", "587"))
+    if port == 465:
+        server = smtplib.SMTP_SSL(host, port, timeout=30)
+    else:
+        server = smtplib.SMTP(host, port, timeout=30)
+        if config.get("SMTP_STARTTLS", "1") != "0":
+            server.starttls()
+    with server:
+        if config.get("SMTP_USER") and config.get("SMTP_PASSWORD"):
+            server.login(config["SMTP_USER"], config["SMTP_PASSWORD"])
+        server.send_message(msg)
+
+
+def main():
+    if len(sys.argv) != 3:
+        print(__doc__.split("\n\n")[1], file=sys.stderr)
+        return 1
+    team, subject = sys.argv[1], sys.argv[2]
+    body = sys.stdin.read()
+
+    try:
+        if not CONFIG.is_file():
+            raise RuntimeError(f"no config at {CONFIG}")
+        to = recipient(team)
+        send(read_config(CONFIG), to, subject, body)
+        status = f"sent to {to}"
+    except Exception as e:  # report any failure, never lose the notification
+        status = f"NOT SENT ({e})"
+
+    LOG.parent.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    with LOG.open("a") as log:
+        log.write(f"=== {stamp} {status}: {subject}\n{body.rstrip()}\n\n")
+    print(f"notify: {status}: {subject}")
+    return 0 if status.startswith("sent") else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

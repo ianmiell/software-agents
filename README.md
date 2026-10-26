@@ -9,6 +9,7 @@ lives in `teams/<team>/` and runs against its own target repo(s).
 bin/
   run-agent <team> <agent>   run one agent once
   run-team <team>            run all of a team's agents in loops (use tmux)
+  notify <team> "<subject>"  email the team's NOTIFY_TO (body on stdin; SMTP config in ~/.config/software-agents/notify.env)
 teams/<team>/
   .claude-plugin/plugin.json the team is loaded as a Claude Code plugin
   agents/<agent>.md          agent definitions (frontmatter sets model and tools)
@@ -30,9 +31,7 @@ Output is appended to `$LOG_DIR/agent-<agent>.log`.
 
 | Team | Target | Docs |
 |---|---|---|
-| `rightmove` | `rightmove-*` repos, run from `~/git/rightmove-data-scraper` | [teams/rightmove/README.md](teams/rightmove/README.md) |
-| `busstop` | `transport_tracker`, run from `~/git/transport_tracker` | [teams/busstop/README.md](teams/busstop/README.md) |
-| `curzon` | `curzon-listings`, run from `~/git/curzon-listings` | [teams/curzon/README.md](teams/curzon/README.md) |
+| `ianmiell` | every `ianmiell` GitHub repo except forks, archived repos and its ignore list | [teams/ianmiell/README.md](teams/ianmiell/README.md) |
 
 ## Adding a team
 
@@ -41,11 +40,11 @@ Output is appended to `$LOG_DIR/agent-<agent>.log`.
    `run-agent` calls agents as `<team>:<agent>`).
 3. Write `agents/<agent>.md` with `name`, `description`, `model`, `tools`
    frontmatter.
-4. Copy `teams/rightmove/team.sh` and set `WORK_DIR`, `LOG_DIR`, `AGENTS`,
+4. Copy `teams/ianmiell/team.sh` and set `WORK_DIR`, `LOG_DIR`, `AGENTS`,
    `PROMPT`, sleeps and `IDLE_PATTERNS`.
 5. Try one agent with `bin/run-agent <team> <agent>`, then
    `tmux new -s agents-<team> '~/git/software-agents/bin/run-team <team>'`.
 
 Project knowledge the agents learn at runtime (log quirks, API workarounds)
-belongs in the target repo's `AGENTS.md`, which they load because they run
-there; keep team mechanics here.
+belongs in the target repo's `AGENTS.md`, which they read before working on
+that repo; keep team mechanics here.
