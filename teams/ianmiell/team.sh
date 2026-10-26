@@ -6,7 +6,7 @@ REPOS="$TEAM_DIR/repos"
 # The only address the agents may email, through the Gmail connector.
 # hooks/only-email-owner reads it from here and blocks any other recipient.
 # run-agent also emails it when an agent starts failing.
-NOTIFY_TO=ian.miell@container-solutions.com
+NOTIFY_TO=ian.miell@gmail.com
 # The GitHub login whose issues the agents act on: opened by it, or commented
 # on, labeled or edited by it.
 OWNER_LOGIN=ianmiell

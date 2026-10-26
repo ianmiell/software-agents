@@ -61,7 +61,7 @@ Edits to the lists take effect at each agent's next cycle; no restart needed.
 
 ## Email
 
-The agents email `NOTIFY_TO` in `team.sh` (ian.miell@container-solutions.com)
+The agents email `NOTIFY_TO` in `team.sh` (ian.miell@gmail.com)
 through the claude.ai Gmail connector, at most one email per agent per cycle,
 when something significant happened:
 
