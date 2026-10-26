@@ -98,9 +98,19 @@ echo test | ~/git/software-agents/bin/notify ianmiell "[ianmiell] test"
 
 ## Running
 
+As a systemd user service (install the unit once as in the
+[top-level README](../../README.md#running-as-a-service)):
+
+```bash
+systemctl --user enable --now software-agents@ianmiell
+journalctl --user -u software-agents@ianmiell -f
+systemctl --user disable --now software-agents@ianmiell   # stop
+```
+
+Or in tmux, not both at once:
+
 ```bash
 tmux new -s agents-ianmiell '~/git/software-agents/bin/run-team ianmiell'
-tmux attach -t agents-ianmiell
 
 # One agent, once
 ~/git/software-agents/bin/run-agent ianmiell triage

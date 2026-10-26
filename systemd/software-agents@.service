@@ -1,0 +1,24 @@
+# Runs one agent team (bin/run-team <team>) as a systemd user service.
+# The instance name is the team: software-agents@ianmiell.service.
+# Install and manage it as described in the README ("Running as a service").
+[Unit]
+Description=software-agents %i agent team
+Documentation=file://%h/git/software-agents/README.md
+
+[Service]
+Type=simple
+WorkingDirectory=%h/git/software-agents
+# User services get a minimal PATH. The agents need claude, gh, git, jq,
+# python3 and node; override PATH (or add anything else) in the optional
+# environment file, e.g. after an nvm upgrade changes node's directory.
+Environment=PATH=%h/.local/bin:%h/.nvm/versions/node/v22.17.1/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/bin:/usr/bin:/bin
+EnvironmentFile=-%h/.config/software-agents/env
+ExecStart=%h/git/software-agents/bin/run-team %i
+Restart=on-failure
+RestartSec=60
+# Stopping kills run-team and every agent it started, mid-cycle if need be.
+KillMode=control-group
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target
