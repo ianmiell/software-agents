@@ -116,8 +116,12 @@ tmux new -s agents-ianmiell '~/git/software-agents/bin/run-team ianmiell'
 ~/git/software-agents/bin/run-agent ianmiell triage
 ```
 
-Each agent sleeps a minute between cycles, idle or not. Settings are in
-`team.sh`; restart the service after changing them.
+Each agent backs off on its own. After a cycle that did work it sleeps 30
+seconds; after each idle or failed cycle it sleeps twice as long as last time
+(30s, 1m, 2m, 4m ... up to an hour). So a new issue is picked up within the
+agent's current sleep, at most an hour, and then worked on quickly. Settings
+(`MIN_SLEEP`, `MAX_SLEEP`) are in `team.sh`; restart the service after
+changing them.
 
 Logs: `~/git/software-agents/logs/ianmiell/agent-<agent>.log`. The
 code-reviewer keeps the commits and PR heads it has reviewed in

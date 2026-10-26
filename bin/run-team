@@ -4,9 +4,10 @@
 # Usage: bin/run-team <team>
 #   tmux new -s agents-<team> '~/git/software-agents/bin/run-team <team>'
 #
-# After each run an agent sleeps IDLE_SLEEP if its output matched
-# IDLE_PATTERNS (nothing to do), otherwise WORK_SLEEP. Agents in
-# FIXED_SLEEP_AGENTS always sleep IDLE_SLEEP. All from teams/<team>/team.sh.
+# Each agent backs off on its own: after a run that did work it sleeps
+# MIN_SLEEP; after a run that was idle (output matched IDLE_PATTERNS) or
+# failed, it sleeps twice as long as last time, up to MAX_SLEEP. Agents in
+# FIXED_SLEEP_AGENTS always sleep MAX_SLEEP. All from teams/<team>/team.sh.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -38,15 +39,20 @@ fixed_sleep() {
 agent_loop() {
   local agent="$1"
   local log="$LOG_DIR/agent-$agent.log"
-  local output pause
+  local output status pause=0
   while true; do
     # run-agent appends to the log itself; capture the output to judge idleness.
     output="$("$ROOT/bin/run-agent" "$team" "$agent" 2>&1)"
+    status=$?
     echo "$output"
-    if fixed_sleep "$agent" || grep -qiE "$IDLE_PATTERNS" <<<"$output"; then
-      pause="$IDLE_SLEEP"
+    if fixed_sleep "$agent"; then
+      pause="$MAX_SLEEP"
+    elif [ "$status" -ne 0 ] || grep -qiE "$IDLE_PATTERNS" <<<"$output"; then
+      pause=$(( pause * 2 ))
+      [ "$pause" -lt "$MIN_SLEEP" ] && pause="$MIN_SLEEP"
+      [ "$pause" -gt "$MAX_SLEEP" ] && pause="$MAX_SLEEP"
     else
-      pause="$WORK_SLEEP"
+      pause="$MIN_SLEEP"
     fi
     echo "$(date -u): [$agent] sleeping ${pause}s" | tee -a "$log"
     sleep "$pause"
@@ -55,7 +61,7 @@ agent_loop() {
 
 echo "$(date -u): starting $team team: ${AGENTS[*]}"
 echo "  work dir:   $WORK_DIR"
-echo "  idle sleep: ${IDLE_SLEEP}s, work sleep: ${WORK_SLEEP}s"
+echo "  sleep:      ${MIN_SLEEP}s after work, doubling when idle up to ${MAX_SLEEP}s"
 echo "  logs:       $LOG_DIR/agent-*.log"
 echo "  stop:       ctrl-c (or kill $$)"
 

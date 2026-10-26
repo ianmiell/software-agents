@@ -21,15 +21,16 @@ mkdir -p "$WORK_DIR"
 # issues on old repos are not handed to the engineer. Move it back to triage them.
 TRIAGE_SINCE=2026-10-01
 
-# run-team: seconds to sleep after an idle cycle, and after a cycle that did work.
-IDLE_SLEEP=60
-WORK_SLEEP=60
+# run-team backoff, in seconds: an agent sleeps MIN_SLEEP after a cycle that
+# did work, and doubles its sleep after each idle or failed cycle, up to MAX_SLEEP.
+MIN_SLEEP=30
+MAX_SLEEP=3600
 # Output matching this (case-insensitive) means the agent had nothing to do.
 IDLE_PATTERNS="no agent-task issues open|no findings|nothing to do|no issues to triage"
 
 # Agents run-team starts, in order.
 AGENTS=(triage engineer code-reviewer)
-# These always sleep IDLE_SLEEP, even after doing work.
+# These always sleep MAX_SLEEP, even after doing work.
 FIXED_SLEEP_AGENTS=()
 
 declare -A PROMPT=(
