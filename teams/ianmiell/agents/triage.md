@@ -54,6 +54,16 @@ Your prompt names the repos helper. Never act on an issue unless the helper says
 
 Whether the repo is `main` or `pr` does not change the routing: the engineer opens a PR in `pr` repos.
 
+## Email
+
+If you routed any issue to a human this cycle, send one email at the end of the cycle listing them, using the notify command from your prompt:
+```bash
+<notify command> "[ianmiell] triage: <n> issue(s) need you" <<'EOF'
+<one block per issue: repo#N, title, URL, and why it needs a human>
+EOF
+```
+Put `CRITICAL` at the start of the subject if any of them is a `critical` code-concern or a security problem. Issues routed to the engineer need no email; the engineer reports its own work. Never put secrets in an email. If notify fails, say so in your output; it has logged the message, so don't retry.
+
 ## Output
 
 Print one line per issue triaged: `<repo>#N: routed to <engineer|human> — <reason>`.

@@ -52,6 +52,38 @@ Edits to the lists take effect at each agent's next cycle; no restart needed.
 - The agents find work through `gh search` across the owner, so polling doesn't
   grow with the number of repos. GitHub search can lag a minute or two behind.
 
+## Email
+
+The agents email you through `bin/notify`, at most one email per agent per
+cycle, when something significant happened:
+
+| From | When |
+|---|---|
+| triage | An issue was routed to you (`needs-human-review`) |
+| engineer | It pushed a commit, opened a PR, or asked a question on an issue |
+| code-reviewer | It opened or reopened a `code-concern` issue, or commented findings on a PR |
+| run-agent | An agent started exiting non-zero, and again when it recovers |
+
+Subjects start `[ianmiell]` (`CRITICAL` first for critical findings).
+Idle cycles send nothing. Every notification is also appended to
+`logs/notifications.log`, so nothing is lost while email isn't set up.
+
+Setup (once): create `~/.config/software-agents/notify.env`, readable only by
+you. For Gmail, make an [app password](https://myaccount.google.com/apppasswords):
+
+```bash
+mkdir -p ~/.config/software-agents
+install -m 600 /dev/null ~/.config/software-agents/notify.env
+cat > ~/.config/software-agents/notify.env <<'EOF'
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=<your gmail address>
+SMTP_PASSWORD=<app password>
+NOTIFY_TO=<where to send>
+EOF
+echo "test" | ~/git/software-agents/bin/notify "[ianmiell] test"
+```
+
 ## Running
 
 ```bash

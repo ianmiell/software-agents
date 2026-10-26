@@ -3,6 +3,9 @@
 TEAM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Which repos are watched, and whether they are worked on main or through PRs.
 REPOS="$TEAM_DIR/repos"
+# Emails the owner; see bin/notify for its config. run-agent also uses it to
+# report an agent that starts failing.
+NOTIFY="$(cd "$TEAM_DIR/../.." && pwd)/bin/notify"
 
 # Agents run from here, outside any target repo. The engineer and code-reviewer
 # keep their own clones of the target repos under it.
@@ -26,7 +29,7 @@ AGENTS=(triage engineer code-reviewer)
 FIXED_SLEEP_AGENTS=()
 
 declare -A PROMPT=(
-  [triage]="Triage open GitHub issues created on or after $TRIAGE_SINCE across the watched ianmiell repos. The repos helper is $REPOS. Comment on each un-triaged issue with who should handle it and label accordingly. Follow all rules in your agent definition."
-  [engineer]="Check for open agent-task GitHub issues across the watched ianmiell repos and work on the highest priority one. The repos helper is $REPOS and your clones live in $WORK_DIR. Follow all rules in your agent definition."
-  [code-reviewer]="Review new commits on the default branches of the watched ianmiell repos and their open PRs. The repos helper is $REPOS and clones live in $WORK_DIR. Raise GitHub issues for any findings as instructed. Your reviewed file is $LOG_DIR/code-reviewer-reviewed.txt"
+  [triage]="Triage open GitHub issues created on or after $TRIAGE_SINCE across the watched ianmiell repos. The repos helper is $REPOS and the notify command is $NOTIFY. Comment on each un-triaged issue with who should handle it and label accordingly. Follow all rules in your agent definition."
+  [engineer]="Check for open agent-task GitHub issues across the watched ianmiell repos and work on the highest priority one. The repos helper is $REPOS, the notify command is $NOTIFY, and your clones live in $WORK_DIR. Follow all rules in your agent definition."
+  [code-reviewer]="Review new commits on the default branches of the watched ianmiell repos and their open PRs. The repos helper is $REPOS, the notify command is $NOTIFY, and clones live in $WORK_DIR. Raise GitHub issues for any findings as instructed. Your reviewed file is $LOG_DIR/code-reviewer-reviewed.txt"
 )

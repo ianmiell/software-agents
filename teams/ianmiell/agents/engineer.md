@@ -93,6 +93,22 @@ gh pr create -R ianmiell/<repo> --base "$default" --label needs-human-review \
 <summary, the checks you ran and their output, anything a human must do after merging>"
 ```
 
+## Email
+
+Send one email at the end of any cycle in which you pushed a commit, opened a PR, or asked for clarification on an issue, using the notify command from your prompt:
+```bash
+<notify command> "[ianmiell] engineer: <repo>#<N> <pushed to main|PR opened|question asked>" <<'EOF'
+Issue: <title and URL>
+Repo: <repo> (<main|pr>)
+What changed: <one paragraph>
+Checks: <what you ran and whether it passed>
+Commit/PR: <hash and URL, or PR URL>
+Your checkout: <pulled | not pulled, and why | none>
+Needs you: <anything a human must do, or "nothing">
+EOF
+```
+Never put secrets in an email. Send nothing for a cycle that ends in "no agent-task issues open" or "nothing to do". If notify fails, say so in your output; it has logged the message, so don't retry.
+
 ## Output
 
 Print: the issue worked on, the repo and its mode, what changed, the checks run and whether they passed, the commit hash or PR URL, and whether the owner's checkout was pulled.

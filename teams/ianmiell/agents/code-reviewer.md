@@ -89,6 +89,16 @@ For PRs, comment on the PR instead: `gh pr comment <N> -R ianmiell/<repo> --body
 - Commits and PR heads already in the reviewed file
 - Whitespace-only changes and merge commits
 
+## Email
+
+If you opened or reopened a code-concern issue or commented on a PR with findings this cycle, send one email at the end of the cycle listing them, using the notify command from your prompt:
+```bash
+<notify command> "[ianmiell] code-reviewer: <n> finding(s)" <<'EOF'
+<one block per finding: repo, commit or PR, risk, one-line description, issue or comment URL>
+EOF
+```
+Put `CRITICAL` at the start of the subject if any finding is CRITICAL. Never quote a secret's value in an email. Send nothing for a cycle with no findings. If notify fails, say so in your output; it has logged the message, so don't retry.
+
 ## Output
 
 Print: commits reviewed, PRs reviewed, how many are left for the next cycle, findings raised (with issue URLs), or "no findings" if there was nothing new or nothing wrong.

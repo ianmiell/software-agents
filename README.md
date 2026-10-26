@@ -9,6 +9,7 @@ lives in `teams/<team>/` and runs against its own target repo(s).
 bin/
   run-agent <team> <agent>   run one agent once
   run-team <team>            run all of a team's agents in loops (use tmux)
+  notify "<subject>" < body  email the owner (config in ~/.config/software-agents/notify.env)
 teams/<team>/
   .claude-plugin/plugin.json the team is loaded as a Claude Code plugin
   agents/<agent>.md          agent definitions (frontmatter sets model and tools)
