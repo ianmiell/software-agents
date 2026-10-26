@@ -8,7 +8,7 @@ lives in `teams/<team>/` and runs against its own target repo(s).
 ```
 bin/
   run-agent <team> <agent>   run one agent once
-  run-team <team>            run all of a team's agents in loops (use tmux)
+  run-team <team>            run all of a team's agents in loops
   notify <team> "<subject>"  email the team's NOTIFY_TO (body on stdin; SMTP config in ~/.config/software-agents/notify.env)
 teams/<team>/
   .claude-plugin/plugin.json the team is loaded as a Claude Code plugin
@@ -43,7 +43,7 @@ Output is appended to `$LOG_DIR/agent-<agent>.log`.
 4. Copy `teams/ianmiell/team.sh` and set `WORK_DIR`, `LOG_DIR`, `AGENTS`,
    `PROMPT`, sleeps and `IDLE_PATTERNS`.
 5. Try one agent with `bin/run-agent <team> <agent>`, then
-   `tmux new -s agents-<team> '~/git/software-agents/bin/run-team <team>'`.
+   `bin/run-team <team>`.
 
 Project knowledge the agents learn at runtime (log quirks, API workarounds)
 belongs in the target repo's `AGENTS.md`, which they read before working on

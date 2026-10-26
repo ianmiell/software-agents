@@ -2,7 +2,6 @@
 # Run all of a team's agents continuously, each in its own loop.
 #
 # Usage: bin/run-team <team>
-#   tmux new -s agents-<team> '~/git/software-agents/bin/run-team <team>'
 #
 # After each run an agent sleeps IDLE_SLEEP if its output matched
 # IDLE_PATTERNS (nothing to do), otherwise WORK_SLEEP. Agents in

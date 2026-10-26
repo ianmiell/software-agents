@@ -99,8 +99,7 @@ echo test | ~/git/software-agents/bin/notify ianmiell "[ianmiell] test"
 ## Running
 
 ```bash
-tmux new -s agents-ianmiell '~/git/software-agents/bin/run-team ianmiell'
-tmux attach -t agents-ianmiell
+~/git/software-agents/bin/run-team ianmiell
 
 # One agent, once
 ~/git/software-agents/bin/run-agent ianmiell triage
