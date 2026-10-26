@@ -116,8 +116,8 @@ tmux new -s agents-ianmiell '~/git/software-agents/bin/run-team ianmiell'
 ~/git/software-agents/bin/run-agent ianmiell triage
 ```
 
-Each agent sleeps 30 minutes after an idle cycle and 5 minutes after doing
-work. Settings are in `team.sh`.
+Each agent sleeps a minute between cycles, idle or not. Settings are in
+`team.sh`; restart the service after changing them.
 
 Logs: `~/git/software-agents/logs/ianmiell/agent-<agent>.log`. The
 code-reviewer keeps the commits and PR heads it has reviewed in

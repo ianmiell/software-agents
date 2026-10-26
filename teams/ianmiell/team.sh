@@ -22,8 +22,8 @@ mkdir -p "$WORK_DIR"
 TRIAGE_SINCE=2026-10-01
 
 # run-team: seconds to sleep after an idle cycle, and after a cycle that did work.
-IDLE_SLEEP=1800
-WORK_SLEEP=300
+IDLE_SLEEP=60
+WORK_SLEEP=60
 # Output matching this (case-insensitive) means the agent had nothing to do.
 IDLE_PATTERNS="no agent-task issues open|no findings|nothing to do|no issues to triage"
 
