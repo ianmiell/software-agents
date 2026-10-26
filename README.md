@@ -10,6 +10,7 @@ bin/
   run-agent <team> <agent>   run one agent once
   run-team <team>            run all of a team's agents in loops (use tmux)
   notify <team> "<subject>"  email the team's NOTIFY_TO (body on stdin; SMTP config in ~/.config/software-agents/notify.env)
+  rotate-logs <team>         rotate team logs daily, gzip after 3 days, delete after 31 (run-team runs it)
 systemd/
   software-agents@.service   systemd user unit running run-team <team> (instance = team)
 teams/<team>/

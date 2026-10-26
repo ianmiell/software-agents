@@ -96,7 +96,11 @@ echo "  sleep:      ${MIN_SLEEP}s after work, doubling when idle up to ${MAX_SLE
 echo "  logs:       $LOG_DIR/agent-*.log"
 echo "  stop:       ctrl-c (or kill $$)"
 
-pids=()
+# Rotate logs now and then daily (bin/rotate-logs: gzip after 3 days, delete
+# after 31).
+(while true; do "$ROOT/bin/rotate-logs" "$team"; sleep 86400; done) &
+pids=("$!")
+echo "  log rotation: pid $!"
 for agent in "${AGENTS[@]}"; do
   agent_loop "$agent" &
   pids+=("$!")
