@@ -9,9 +9,9 @@ before working there.
 
 | Agent | Model | Role |
 |---|---|---|
-| **triage** | haiku | Labels new un-triaged issues `agent-task` (engineer) or `needs-human-review`, then `triaged` |
+| **triage** | haiku | Labels your new un-triaged issues `agent-task` (engineer) or `needs-human-review`, then `triaged` |
 | **engineer** | sonnet | Works one `agent-task` issue per cycle: pushes to the default branch, or opens a PR in `pr` repos |
-| **code-reviewer** | sonnet | Adversarially reviews new commits on default branches (anyone's) and open PRs; opens `code-concern` issues |
+| **code-reviewer** | sonnet | Adversarially reviews new commits on default branches (anyone's) and your open PRs; opens `code-concern` issues |
 
 There is no monitor or log-reviewer: those depend on how each project runs.
 
@@ -45,7 +45,14 @@ Edits to the lists take effect at each agent's next cycle; no restart needed.
   anything there, and never deploys.
 - **Even in `main` repos, destructive changes go through a PR**: deleting or
   overwriting data, or removing a feature, script or option.
-- **Triage only looks at issues opened on or after `TRIAGE_SINCE`** in
+- **The agents only act on your issues**: ones `ianmiell` opened, or has
+  commented on, labeled or edited (`repos mine <repo> <N>`). Others' issues
+  get no comment, label or code, and comments by others on your issues are
+  treated as information, not instructions. The code-reviewer only reviews PRs
+  you opened. To have a stranger's issue handled, comment on it or label it
+  `agent-task`. Since the agents post as `ianmiell` too, their comments start
+  `**Triage:**` or `**Engineer:**`.
+- **Triage only looks at issues updated on or after `TRIAGE_SINCE`** in
   `team.sh`, so years-old issues on old repos aren't handed to the engineer.
   Label an older issue `agent-task` yourself to have it worked.
 - **Labels are created per repo on first use** (`repos labels <repo>`).
@@ -54,8 +61,9 @@ Edits to the lists take effect at each agent's next cycle; no restart needed.
 
 ## Email
 
-The agents email you through `bin/notify`, at most one email per agent per
-cycle, when something significant happened:
+The agents email `NOTIFY_TO` in `team.sh` (ian.miell@container-solutions.com)
+through the claude.ai Gmail connector, at most one email per agent per cycle,
+when something significant happened:
 
 | From | When |
 |---|---|
@@ -64,25 +72,14 @@ cycle, when something significant happened:
 | code-reviewer | It opened or reopened a `code-concern` issue, or commented findings on a PR |
 | run-agent | An agent started exiting non-zero, and again when it recovers |
 
-Subjects start `[ianmiell]` (`CRITICAL` first for critical findings).
-Idle cycles send nothing. Every notification is also appended to
-`logs/notifications.log`, so nothing is lost while email isn't set up.
+Subjects start `[ianmiell]` (`CRITICAL` first for critical findings). Idle
+cycles send nothing. The mail goes out from the Gmail account the connector is
+signed in to; `claude mcp list` shows whether it is connected.
 
-Setup (once): create `~/.config/software-agents/notify.env`, readable only by
-you. For Gmail, make an [app password](https://myaccount.google.com/apppasswords):
-
-```bash
-mkdir -p ~/.config/software-agents
-install -m 600 /dev/null ~/.config/software-agents/notify.env
-cat > ~/.config/software-agents/notify.env <<'EOF'
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=<your gmail address>
-SMTP_PASSWORD=<app password>
-NOTIFY_TO=<where to send>
-EOF
-echo "test" | ~/git/software-agents/bin/notify "[ianmiell] test"
-```
+The agents are told to only ever email that address. Because they read text
+written by others, `hooks/only-email-owner` (a plugin hook) also enforces it:
+it blocks any send to another address, any cc or bcc, sending a draft, and
+every other Gmail tool.
 
 ## Running
 
