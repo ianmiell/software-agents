@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Rotate, compress and expire a team's logs.
+#
+# Usage: bin/rotate-logs <team>
+#
+# Once per calendar day, each live log ($LOG_DIR/agent-*.log and
+# logs/notifications.log) is copied to <log>.YYYY-MM-DD and truncated in
+# place (agents hold it open with `tee -a`, so it is never moved). Then
+# rotated logs older than GZIP_AFTER_DAYS days are gzipped, and rotated logs
+# older than KEEP_DAYS days are deleted. Safe to run as often as you like.
+# run-team runs it at start and then every day.
+set -uo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+KEEP_DAYS="${KEEP_DAYS:-31}"
+GZIP_AFTER_DAYS="${GZIP_AFTER_DAYS:-3}"
+
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 <team>" >&2
+  exit 1
+fi
+team="$1"
+if [ ! -f "$ROOT/teams/$team/team.sh" ]; then
+  echo "No team '$team' (missing $ROOT/teams/$team/team.sh)" >&2
+  exit 1
+fi
+# shellcheck source=/dev/null
+source "$ROOT/teams/$team/team.sh"
+[ -d "$LOG_DIR" ] || exit 0
+
+today="$(date +%F)"
+shopt -s nullglob
+live=("$LOG_DIR"/agent-*.log "$ROOT/logs/notifications.log")
+for f in "${live[@]}"; do
+  [ -s "$f" ] || continue
+  # Already rotated today: leave it until tomorrow.
+  [ -e "$f.$today" ] || [ -e "$f.$today.gz" ] && continue
+  if cp -p "$f" "$f.$today"; then
+    : > "$f"
+    touch "$f.$today"
+  fi
+done
+
+# Age is judged by modification time (the day the file was rotated).
+for dir in "$LOG_DIR" "$ROOT/logs"; do
+  [ -d "$dir" ] || continue
+  # -maxdepth 1 and exact name patterns: nothing else is ever touched.
+  find "$dir" -maxdepth 1 -type f \
+    \( -name 'agent-*.log.????-??-??' -o -name 'notifications.log.????-??-??' \) \
+    -mtime +"$GZIP_AFTER_DAYS" -exec gzip -f {} +
+  find "$dir" -maxdepth 1 -type f \
+    \( -name 'agent-*.log.????-??-??.gz' -o -name 'notifications.log.????-??-??.gz' \) \
+    -mtime +"$KEEP_DAYS" -delete
+  # Rotated but never compressed, and already past retention.
+  find "$dir" -maxdepth 1 -type f \
+    \( -name 'agent-*.log.????-??-??' -o -name 'notifications.log.????-??-??' \) \
+    -mtime +"$KEEP_DAYS" -delete
+done
