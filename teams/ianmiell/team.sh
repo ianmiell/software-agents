@@ -3,10 +3,10 @@
 TEAM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Which repos are watched, and whether they are worked on main or through PRs.
 REPOS="$TEAM_DIR/repos"
-# The only address the agents may email, through the Gmail connector.
-# hooks/only-email-owner reads it from here and blocks any other recipient.
-# run-agent also emails it when an agent starts failing.
+# The only address the agents email. bin/notify reads it from here and sends
+# nowhere else; run-agent also emails it when an agent starts failing.
 NOTIFY_TO=ian.miell@gmail.com
+NOTIFY="$(cd "$TEAM_DIR/../.." && pwd)/bin/notify ianmiell"
 # The GitHub login whose issues the agents act on: opened by it, or commented
 # on, labeled or edited by it.
 OWNER_LOGIN=ianmiell
@@ -33,7 +33,7 @@ AGENTS=(triage engineer code-reviewer)
 FIXED_SLEEP_AGENTS=()
 
 declare -A PROMPT=(
-  [triage]="Triage open GitHub issues updated on or after $TRIAGE_SINCE across the watched ianmiell repos, acting only on issues $OWNER_LOGIN opened or updated. The repos helper is $REPOS. Only ever send email to $NOTIFY_TO. Comment on each un-triaged issue with who should handle it and label accordingly. Follow all rules in your agent definition."
-  [engineer]="Check for open agent-task GitHub issues across the watched ianmiell repos, acting only on issues $OWNER_LOGIN opened or updated, and work on the highest priority one. The repos helper is $REPOS and your clones live in $WORK_DIR. Only ever send email to $NOTIFY_TO. Follow all rules in your agent definition."
-  [code-reviewer]="Review new commits on the default branches of the watched ianmiell repos and open PRs opened by $OWNER_LOGIN. The repos helper is $REPOS and clones live in $WORK_DIR. Only ever send email to $NOTIFY_TO. Raise GitHub issues for any findings as instructed. Your reviewed file is $LOG_DIR/code-reviewer-reviewed.txt"
+  [triage]="Triage open GitHub issues updated on or after $TRIAGE_SINCE across the watched ianmiell repos, acting only on issues $OWNER_LOGIN opened or updated. The repos helper is $REPOS. The notify command is $NOTIFY. Comment on each un-triaged issue with who should handle it and label accordingly. Follow all rules in your agent definition."
+  [engineer]="Check for open agent-task GitHub issues across the watched ianmiell repos, acting only on issues $OWNER_LOGIN opened or updated, and work on the highest priority one. The repos helper is $REPOS and your clones live in $WORK_DIR. The notify command is $NOTIFY. Follow all rules in your agent definition."
+  [code-reviewer]="Review new commits on the default branches of the watched ianmiell repos and open PRs opened by $OWNER_LOGIN. The repos helper is $REPOS and clones live in $WORK_DIR. The notify command is $NOTIFY. Raise GitHub issues for any findings as instructed. Your reviewed file is $LOG_DIR/code-reviewer-reviewed.txt"
 )

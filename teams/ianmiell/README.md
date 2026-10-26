@@ -61,9 +61,9 @@ Edits to the lists take effect at each agent's next cycle; no restart needed.
 
 ## Email
 
-The agents email `NOTIFY_TO` in `team.sh` (ian.miell@gmail.com)
-through the claude.ai Gmail connector, at most one email per agent per cycle,
-when something significant happened:
+The agents email `NOTIFY_TO` in `team.sh` (ian.miell@gmail.com) over SMTP
+with `bin/notify ianmiell`, at most one email per agent per cycle, when
+something significant happened:
 
 | From | When |
 |---|---|
@@ -73,13 +73,28 @@ when something significant happened:
 | run-agent | An agent started exiting non-zero, and again when it recovers |
 
 Subjects start `[ianmiell]` (`CRITICAL` first for critical findings). Idle
-cycles send nothing. The mail goes out from the Gmail account the connector is
-signed in to; `claude mcp list` shows whether it is connected.
+cycles send nothing. Every notification is also appended to
+`logs/notifications.log`, sent or not, so nothing is lost while email isn't
+set up.
 
-The agents are told to only ever email that address. Because they read text
-written by others, `hooks/only-email-owner` (a plugin hook) also enforces it:
-it blocks any send to another address, any cc or bcc, sending a draft, and
-every other Gmail tool.
+`bin/notify` takes the recipient only from `team.sh`; nothing an agent passes
+can change it. The agents are also told never to send email any other way.
+
+Setup (once): make a Gmail [app password](https://myaccount.google.com/apppasswords)
+for the account to send from, and put the SMTP settings in a file readable only
+by you (the recipient is not set here):
+
+```bash
+mkdir -p ~/.config/software-agents
+install -m 600 /dev/null ~/.config/software-agents/notify.env
+cat > ~/.config/software-agents/notify.env <<'EOF'
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=ian.miell@gmail.com
+SMTP_PASSWORD=<app password>
+EOF
+echo test | ~/git/software-agents/bin/notify ianmiell "[ianmiell] test"
+```
 
 ## Running
 
