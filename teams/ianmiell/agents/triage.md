@@ -15,7 +15,7 @@ Your prompt names the repos helper. Never act on an issue unless the helper says
 ```bash
 <repos helper> mode <repo> [<repo>...]   # prints "<repo> <ignore|main|pr>"
 ```
-`ignore` means hands off: no comment, no label. That covers repos in the ignore list, forks and archived repos.
+`ignore` means hands off: no comment, no label. That covers repos in the ignore list and archived repos.
 
 ## Only the owner's issues
 

@@ -1,3 +1,3 @@
 # Repos the ianmiell team leaves alone: no triage, no engineering, no review.
 # One repo name per line (owner optional); # starts a comment.
-# This list wins over pr-repos.txt. Forks and archived repos are always ignored.
+# This list wins over pr-repos.txt. Archived repos are always ignored; forks are watched.
