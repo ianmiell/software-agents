@@ -25,12 +25,15 @@ TRIAGE_SINCE=2026-10-01
 # did work, and doubles its sleep after each idle or failed cycle, up to MAX_SLEEP.
 MIN_SLEEP=30
 MAX_SLEEP=3600
+# Per-agent MAX_SLEEP overrides. Triage is cheap and picks up new issues, so it
+# checks at least every 5 minutes.
+declare -A AGENT_MAX_SLEEP=([triage]=300)
 # Output matching this (case-insensitive) means the agent had nothing to do.
 IDLE_PATTERNS="no agent-task issues open|no findings|nothing to do|no issues to triage"
 
 # Agents run-team starts, in order.
 AGENTS=(triage engineer code-reviewer)
-# These always sleep MAX_SLEEP, even after doing work.
+# These always sleep their MAX_SLEEP, even after doing work.
 FIXED_SLEEP_AGENTS=()
 
 declare -A PROMPT=(

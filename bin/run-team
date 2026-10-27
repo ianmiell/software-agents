@@ -6,8 +6,9 @@
 #
 # Each agent backs off on its own: after a run that did work it sleeps
 # MIN_SLEEP; after a run that was idle (output matched IDLE_PATTERNS) or
-# failed, it sleeps twice as long as last time, up to MAX_SLEEP. Agents in
-# FIXED_SLEEP_AGENTS always sleep MAX_SLEEP. All from teams/<team>/team.sh.
+# failed, it sleeps twice as long as last time, up to MAX_SLEEP (or the
+# agent's own cap in AGENT_MAX_SLEEP). Agents in FIXED_SLEEP_AGENTS always
+# sleep that maximum. All from teams/<team>/team.sh.
 #
 # When an agent finishes a cycle that did work, it touches a wake file; every
 # other sleeping agent notices within a few seconds, ends its sleep early and
@@ -31,6 +32,7 @@ fi
 # shellcheck source=/dev/null
 source "$team_dir/team.sh"
 FIXED_SLEEP_AGENTS=("${FIXED_SLEEP_AGENTS[@]+"${FIXED_SLEEP_AGENTS[@]}"}")
+declare -p AGENT_MAX_SLEEP >/dev/null 2>&1 || declare -A AGENT_MAX_SLEEP=()
 mkdir -p "$LOG_DIR"
 
 fixed_sleep() {
@@ -62,6 +64,7 @@ agent_loop() {
   local agent="$1"
   local log="$LOG_DIR/agent-$agent.log"
   local output status stamp pause=0 did_work
+  local max_sleep="${AGENT_MAX_SLEEP[$agent]:-$MAX_SLEEP}"
   while true; do
     # run-agent appends to the log itself; capture the output to judge idleness.
     output="$("$ROOT/bin/run-agent" "$team" "$agent" 2>&1)"
@@ -69,11 +72,11 @@ agent_loop() {
     echo "$output"
     did_work=0
     if fixed_sleep "$agent"; then
-      pause="$MAX_SLEEP"
+      pause="$max_sleep"
     elif [ "$status" -ne 0 ] || grep -qiE "$IDLE_PATTERNS" <<<"$output"; then
       pause=$(( pause * 2 ))
       [ "$pause" -lt "$MIN_SLEEP" ] && pause="$MIN_SLEEP"
-      [ "$pause" -gt "$MAX_SLEEP" ] && pause="$MAX_SLEEP"
+      [ "$pause" -gt "$max_sleep" ] && pause="$max_sleep"
     else
       pause="$MIN_SLEEP"
       did_work=1
@@ -93,6 +96,9 @@ agent_loop() {
 echo "$(date -u): starting $team team: ${AGENTS[*]}"
 echo "  work dir:   $WORK_DIR"
 echo "  sleep:      ${MIN_SLEEP}s after work, doubling when idle up to ${MAX_SLEEP}s"
+for agent in "${!AGENT_MAX_SLEEP[@]}"; do
+  echo "              $agent: up to ${AGENT_MAX_SLEEP[$agent]}s"
+done
 echo "  logs:       $LOG_DIR/agent-*.log"
 echo "  stop:       ctrl-c (or kill $$)"
 
