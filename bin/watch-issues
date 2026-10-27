@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Wake a team's agents when a GitHub issue changes.
+#
+# Usage: bin/watch-issues <team>
+#
+# Every ISSUE_POLL seconds, asks GitHub search for issues in OWNER_LOGIN's
+# repos (forks included) updated after the wake file was last touched. If
+# there are any, touches the wake file, so every sleeping agent wakes and
+# resets its backoff. This makes the agents event driven: they can sleep for
+# a long MAX_SLEEP and still pick up a new or changed issue within about
+# ISSUE_POLL seconds. One search call per poll, no LLM.
+#
+# Agents that did work touch the wake file when they finish, after their own
+# issue updates, so those updates don't wake everyone a second time. GitHub
+# search can lag a little; a change it misses is still picked up at the
+# agents' next scheduled cycle. run-team runs this in the background.
+set -uo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 <team>" >&2
+  exit 1
+fi
+team="$1"
+if [ ! -f "$ROOT/teams/$team/team.sh" ]; then
+  echo "No team '$team' (missing $ROOT/teams/$team/team.sh)" >&2
+  exit 1
+fi
+# shellcheck source=/dev/null
+source "$ROOT/teams/$team/team.sh"
+ISSUE_POLL="${ISSUE_POLL:-60}"
+WAKE_FILE="$LOG_DIR/.wake"
+log="$LOG_DIR/watch-issues.log"
+mkdir -p "$LOG_DIR"
+
+while true; do
+  [ -e "$WAKE_FILE" ] || touch "$WAKE_FILE"
+  since="$(date -u -d "@$(stat -c %Y "$WAKE_FILE")" +%FT%TZ)"
+  # Search matches on whole seconds; the jq check drops anything at or before
+  # the wake time itself.
+  if changed="$(gh search issues --owner "$OWNER_LOGIN" --updated ">=$since" \
+      --sort updated --limit 5 --json repository,number,updatedAt \
+      --jq ".[] | select(.updatedAt > \"$since\") | \"\(.repository.name)#\(.number) \(.updatedAt)\"" 2>&1)"; then
+    if [ -n "$changed" ]; then
+      touch "$WAKE_FILE"
+      echo "$(date -u): [watch-issues] issues changed since $since, waking agents: $(tr '\n' ' ' <<<"$changed")" | tee -a "$log"
+    fi
+  else
+    echo "$(date -u): [watch-issues] search failed: $changed" | tee -a "$log"
+  fi
+  sleep "$ISSUE_POLL"
+done
