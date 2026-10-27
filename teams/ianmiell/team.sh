@@ -23,8 +23,12 @@ TRIAGE_SINCE=2026-10-01
 
 # run-team backoff, in seconds: an agent sleeps MIN_SLEEP after a cycle that
 # did work, and doubles its sleep after each idle or failed cycle, up to MAX_SLEEP.
+# MAX_SLEEP can be long because bin/watch-issues wakes every agent within
+# ISSUE_POLL seconds of an issue changing; it only bounds how long a commit
+# pushed by hand waits for the code-reviewer.
 MIN_SLEEP=30
-MAX_SLEEP=3600
+MAX_SLEEP=14400
+ISSUE_POLL=60
 # Output matching this (case-insensitive) means the agent had nothing to do.
 IDLE_PATTERNS="no agent-task issues open|no findings|nothing to do|no issues to triage"
 

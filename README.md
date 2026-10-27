@@ -11,12 +11,13 @@ bin/
   run-team <team>            run all of a team's agents in loops (use tmux)
   notify <team> "<subject>"  email the team's NOTIFY_TO (body on stdin; SMTP config in ~/.config/software-agents/notify.env)
   rotate-logs <team>         rotate team logs daily, gzip after 3 days, delete after 31 (run-team runs it)
+  watch-issues <team>        wake the team's agents when a GitHub issue changes (run-team runs it)
 systemd/
   software-agents@.service   systemd user unit running run-team <team> (instance = team)
 teams/<team>/
   .claude-plugin/plugin.json the team is loaded as a Claude Code plugin
   agents/<agent>.md          agent definitions (frontmatter sets model and tools)
-  team.sh                    working dir, log dir, sleeps, prompt per agent
+  team.sh                    working dir, log dir, sleeps, issue poll, prompt per agent
   README.md                  roles, labels, how to give the team work
 ```
 

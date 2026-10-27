@@ -119,13 +119,16 @@ tmux new -s agents-ianmiell '~/git/software-agents/bin/run-team ianmiell'
 
 Each agent backs off on its own. After a cycle that did work it sleeps 30
 seconds; after each idle or failed cycle it sleeps twice as long as last time
-(30s, 1m, 2m, 4m ... up to an hour). So a new issue is picked up within the
-agent's current sleep, at most an hour, and then worked on quickly. When an
-agent finishes a cycle that did work, it also wakes all the other agents (via
-`logs/ianmiell/.wake`), which end their sleep early and restart their backoff
-at 30s. Settings
-(`MIN_SLEEP`, `MAX_SLEEP`) are in `team.sh`; restart the service after
-changing them.
+(30s, 1m, 2m, 4m ... up to four hours). Agents don't wait out that sleep for
+new issues: `bin/watch-issues` checks GitHub every minute for issues updated in
+ianmiell's repos since `logs/ianmiell/.wake` was last touched, and touches it
+when it finds any. When an agent finishes a cycle that did work, it touches the
+same file. Either way every sleeping agent ends its sleep early and restarts its
+backoff at 30s, so a new or changed issue is picked up within about a minute.
+The long sleep only delays the code-reviewer for commits pushed by hand.
+Settings (`MIN_SLEEP`, `MAX_SLEEP`, `ISSUE_POLL`) are in `team.sh`; restart the
+service after changing them. The watcher logs to
+`logs/ianmiell/watch-issues.log`.
 
 Logs: `~/git/software-agents/logs/ianmiell/agent-<agent>.log`. The
 code-reviewer keeps the commits and PR heads it has reviewed in
