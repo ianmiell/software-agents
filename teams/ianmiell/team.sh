@@ -23,6 +23,9 @@ TRIAGE_SINCE=2026-10-01
 
 # run-team backoff, in seconds: an agent sleeps MIN_SLEEP after a cycle that
 # did work, and doubles its sleep after each idle or failed cycle, up to MAX_SLEEP.
+# MAX_SLEEP can be long because bin/watch-issues wakes every agent within
+# ISSUE_POLL seconds of an issue changing; it only bounds how long a commit
+# pushed by hand waits for the code-reviewer.
 MIN_SLEEP=30
 MAX_SLEEP=3600
 # Per-agent MAX_SLEEP overrides. Triage is cheap and picks up new issues, so it

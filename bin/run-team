@@ -13,7 +13,9 @@
 # When an agent finishes a cycle that did work, it touches a wake file; every
 # other sleeping agent notices within a few seconds, ends its sleep early and
 # resets its backoff, since work by one agent (a new PR, a commit, a closed
-# issue) is likely to give the others something to do.
+# issue) is likely to give the others something to do. bin/watch-issues
+# touches the same file when a GitHub issue changes, so agents can sleep long
+# and still react to new issues within about ISSUE_POLL seconds.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -48,7 +50,8 @@ touch "$WAKE_FILE"
 
 wake_stamp() { stat -c %y "$WAKE_FILE" 2>/dev/null; }
 
-# Sleep for $1 seconds, or until another agent touches the wake file.
+# Sleep for $1 seconds, or until another agent or watch-issues touches the
+# wake file.
 # Returns 0 if woken early, 1 if the full time elapsed.
 interruptible_sleep() {
   local remaining="$1" stamp="$2"
@@ -87,7 +90,7 @@ agent_loop() {
     stamp="$(wake_stamp)"
     echo "$(date -u): [$agent] sleeping ${pause}s" | tee -a "$log"
     if interruptible_sleep "$pause" "$stamp"; then
-      echo "$(date -u): [$agent] woken early by another agent" | tee -a "$log"
+      echo "$(date -u): [$agent] woken early (another agent did work, or an issue changed)" | tee -a "$log"
       pause=0
     fi
   done
@@ -107,6 +110,10 @@ echo "  stop:       ctrl-c (or kill $$)"
 (while true; do "$ROOT/bin/rotate-logs" "$team"; sleep 86400; done) &
 pids=("$!")
 echo "  log rotation: pid $!"
+# Wake the agents when an issue changes (bin/watch-issues).
+"$ROOT/bin/watch-issues" "$team" &
+pids+=("$!")
+echo "  issue watcher: pid $! (every ${ISSUE_POLL:-60}s)"
 for agent in "${AGENTS[@]}"; do
   agent_loop "$agent" &
   pids+=("$!")
