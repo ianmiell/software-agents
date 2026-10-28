@@ -27,14 +27,16 @@ TRIAGE_SINCE=2026-10-01
 # ISSUE_POLL seconds of an issue changing; it only bounds how long a commit
 # pushed by hand waits for the code-reviewer.
 MIN_SLEEP=30
-MAX_SLEEP=14400
-ISSUE_POLL=60
+MAX_SLEEP=3600
+# Per-agent MAX_SLEEP overrides. Triage is cheap and picks up new issues, so it
+# checks at least every 5 minutes.
+declare -A AGENT_MAX_SLEEP=([triage]=300)
 # Output matching this (case-insensitive) means the agent had nothing to do.
 IDLE_PATTERNS="no agent-task issues open|no findings|nothing to do|no issues to triage"
 
 # Agents run-team starts, in order.
 AGENTS=(triage engineer code-reviewer)
-# These always sleep MAX_SLEEP, even after doing work.
+# These always sleep their MAX_SLEEP, even after doing work.
 FIXED_SLEEP_AGENTS=()
 
 declare -A PROMPT=(

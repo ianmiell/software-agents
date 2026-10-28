@@ -79,7 +79,8 @@ v22.17.1). If one moves, put a full `PATH=...` line in
 3. Write `agents/<agent>.md` with `name`, `description`, `model`, `tools`
    frontmatter.
 4. Copy `teams/ianmiell/team.sh` and set `WORK_DIR`, `LOG_DIR`, `AGENTS`,
-   `PROMPT`, `MIN_SLEEP`/`MAX_SLEEP` and `IDLE_PATTERNS`.
+   `PROMPT`, `MIN_SLEEP`/`MAX_SLEEP` (optionally `AGENT_MAX_SLEEP` per agent)
+   and `IDLE_PATTERNS`.
 5. Try one agent with `bin/run-agent <team> <agent>`, then run the team as a
    service (`systemctl --user enable --now software-agents@<team>`) or with
    `tmux new -s agents-<team> '~/git/software-agents/bin/run-team <team>'`.
